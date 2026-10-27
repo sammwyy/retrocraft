@@ -9,7 +9,6 @@ import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 
@@ -45,7 +44,7 @@ public final class ExtraModels {
         else
             renderer.renderModel(
                     poses.last(),
-                    buffers.getBuffer(RenderType.solid()),
+                    buffers.getBuffer(com.sammwy.retrocraft.compat.Materials.solid()),
                     state,
                     model,
                     1,
@@ -53,6 +52,12 @@ public final class ExtraModels {
                     1,
                     light,
                     overlay);
+    }
+
+    public static boolean available(ResourceLocation id) {
+        var model = Minecraft.getInstance().getModelManager().getModel(id);
+        return model != null
+                && model != Minecraft.getInstance().getModelManager().getMissingModel();
     }
 
     private ExtraModels() {}

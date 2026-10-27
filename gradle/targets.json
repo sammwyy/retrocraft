@@ -5,7 +5,8 @@
     "forge": null,
     "pack_resource": 32,
     "pack_data": 41,
-    "modmenu": "11.0.3"
+    "modmenu": "10.0.0",
+    "fabric_loader": "0.16.14"
   },
   "1.20.6": {
     "java": 21,
@@ -13,7 +14,8 @@
     "forge": "50.2.14",
     "pack_resource": 32,
     "pack_data": 41,
-    "modmenu": "11.0.3"
+    "modmenu": "10.0.0",
+    "fabric_loader": "0.16.14"
   },
   "1.21.1": {
     "java": 21,
@@ -21,7 +23,8 @@
     "forge": "52.1.4",
     "pack_resource": 34,
     "pack_data": 48,
-    "modmenu": "11.0.3"
+    "modmenu": "11.0.3",
+    "fabric_loader": "0.16.14"
   },
   "1.21.3": {
     "java": 21,
@@ -29,7 +32,8 @@
     "forge": "53.1.16",
     "pack_resource": 42,
     "pack_data": 57,
-    "modmenu": "12.0.1"
+    "modmenu": "12.0.1",
+    "fabric_loader": "0.16.14"
   },
   "1.21.4": {
     "java": 21,
@@ -37,7 +41,8 @@
     "forge": "54.1.22",
     "pack_resource": 46,
     "pack_data": 61,
-    "modmenu": "13.0.4"
+    "modmenu": "13.0.4",
+    "fabric_loader": "0.16.14"
   },
   "1.21.5": {
     "java": 21,
@@ -45,7 +50,8 @@
     "forge": "55.1.18",
     "pack_resource": 55,
     "pack_data": 71,
-    "modmenu": "14.0.2"
+    "modmenu": "14.0.2",
+    "fabric_loader": "0.16.14"
   },
   "1.21.8": {
     "java": 21,
@@ -53,7 +59,8 @@
     "forge": "58.1.26",
     "pack_resource": 64,
     "pack_data": 81,
-    "modmenu": "15.0.2"
+    "modmenu": "15.0.2",
+    "fabric_loader": "0.16.14"
   },
   "1.21.10": {
     "java": 21,
@@ -63,7 +70,8 @@
     "pack_resource_minor": 0,
     "pack_data": 88,
     "pack_data_minor": 0,
-    "modmenu": "11.0.3"
+    "modmenu": "16.0.1",
+    "fabric_loader": "0.17.3"
   },
   "1.21.11": {
     "java": 21,
@@ -73,7 +81,9 @@
     "pack_resource_minor": 0,
     "pack_data": 94,
     "pack_data_minor": 1,
-    "modmenu": "17.0.1"
+    "modmenu": "17.0.1",
+    "fabric_loader": "0.17.3",
+    "symbols": "identifiers"
   },
   "26.1.2": {
     "java": 25,
@@ -83,7 +93,9 @@
     "pack_resource_minor": 0,
     "pack_data": 101,
     "pack_data_minor": 1,
-    "modmenu": "18.0.0"
+    "modmenu": "18.0.2",
+    "fabric_loader": "0.19.5",
+    "symbols": "26.1"
   },
   "26.2": {
     "java": 25,
@@ -93,7 +105,9 @@
     "pack_resource_minor": 0,
     "pack_data": 107,
     "pack_data_minor": 1,
-    "modmenu": "20.0.0"
+    "modmenu": "20.0.3",
+    "fabric_loader": "0.19.5",
+    "symbols": "26.2"
   },
   "26.3": {
     "java": 25,
@@ -103,6 +117,8 @@
     "pack_resource_minor": 1,
     "pack_data": 121,
     "pack_data_minor": 0,
-    "modmenu": "21.0.0"
+    "modmenu": "21.0.0",
+    "fabric_loader": "0.19.5",
+    "symbols": "26.2"
   }
 }

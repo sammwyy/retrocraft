@@ -23,17 +23,13 @@ import com.sammwy.retrocraft.server.screen.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.Block;
@@ -43,8 +39,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class ArcadeVariantsTest implements GameTestPlatform {
-    @GameTest(template = EMPTY_STRUCTURE)
-    public void internalRomSurvivesPlacementSavingBreakingAndReplacement(GameTestHelper context) {
+    @Scenario
+    public void internalRomSurvivesPlacementSavingBreakingAndReplacement(ScenarioContext context) {
         var world = context.getLevel();
         var pos = context.absolutePos(new BlockPos(1, 2, 1));
         world.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
@@ -151,8 +147,8 @@ public class ArcadeVariantsTest implements GameTestPlatform {
         context.succeed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE)
-    public void creativeCatalogSeparatesHardwareGamesAndPermanentArcades(GameTestHelper context) {
+    @Scenario
+    public void creativeCatalogSeparatesHardwareGamesAndPermanentArcades(ScenarioContext context) {
         var old = RomCatalog.clientEntries();
         try {
             RomCatalog.clientEntries(
@@ -199,11 +195,7 @@ public class ArcadeVariantsTest implements GameTestPlatform {
                     "Every variant must bake its skin into custom model data for the item model");
             var board = ConsoleRegistry.media(Ids.of("retrocraft", "arcade"));
             List<Component> tooltip = new ArrayList<>();
-            board.appendHoverText(
-                    board.game("a".repeat(64), "pacman"),
-                    Item.TooltipContext.EMPTY,
-                    tooltip,
-                    TooltipFlag.NORMAL);
+            board.tooltip(board.game("a".repeat(64), "pacman"), tooltip);
             context.assertTrue(
                     tooltip.size() == 2
                             && tooltip.getFirst().getString().equals("Compatible with:")
@@ -215,8 +207,8 @@ public class ArcadeVariantsTest implements GameTestPlatform {
         context.succeed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE)
-    public void allSkinsUseTheSameRomBoardAndKeepTheirOwnBlocks(GameTestHelper context) {
+    @Scenario
+    public void allSkinsUseTheSameRomBoardAndKeepTheirOwnBlocks(ScenarioContext context) {
         var board = ConsoleRegistry.media(Ids.of("retrocraft", "arcade"));
         String[] ids = {"arcade", "arcade_tetris", "arcade_space_invaders"};
         for (int i = 0; i < ids.length; i++) {

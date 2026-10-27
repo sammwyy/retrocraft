@@ -20,40 +20,40 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.client.event.*;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 /** Client references are only reached through Forge's physical-side dispatch. */
 final class ForgeClient implements ClientNetwork.Backend, ClientPlatform.Backend {
     private final List<KeyMapping> keys = new ArrayList<>();
-    private final List<ResourceLocation> models = new ArrayList<>();
+    private final Set<ResourceLocation> models = new LinkedHashSet<>();
     private final List<Runnable> setup = new ArrayList<>();
     private final List<Consumer<EntityRenderersEvent.RegisterRenderers>> renderers =
             new ArrayList<>();
 
     static void install() {
+        ItemModels.bootstrap();
         var client = new ForgeClient();
+        client.models.addAll(
+                com.sammwy.retrocraft.client.render.DockedConsoleRenderer.arcadeModels());
         ClientNetwork.install(client);
         ClientPlatform.install(client);
-        var modBus = FMLJavaModLoadingContext.get().getModEventBus();
-        modBus.addListener(
+        com.sammwy.retrocraft.compat.ForgeClientEvents.mod(
+                RegisterKeyMappingsEvent.class,
                 (RegisterKeyMappingsEvent event) -> client.keys.forEach(event::register));
-        modBus.addListener(
-                (ModelEvent.RegisterAdditional event) ->
-                        ExtraModels.register(event, client.models));
-        modBus.addListener(
+        ExtraModels.install(() -> client.models);
+        com.sammwy.retrocraft.compat.ForgeClientEvents.mod(
+                EntityRenderersEvent.RegisterRenderers.class,
                 (EntityRenderersEvent.RegisterRenderers event) ->
                         client.renderers.forEach(callback -> callback.accept(event)));
-        modBus.addListener(
+        com.sammwy.retrocraft.compat.ForgeEvents.mod(
+                FMLClientSetupEvent.class,
                 (FMLClientSetupEvent event) ->
                         event.enqueueWork(
                                 () -> {
@@ -94,40 +94,44 @@ final class ForgeClient implements ClientNetwork.Backend, ClientPlatform.Backend
 
     @Override
     public void joined(Runnable callback) {
-        MinecraftForge.EVENT_BUS.addListener(
+        com.sammwy.retrocraft.compat.ForgeClientEvents.listen(
+                ClientPlayerNetworkEvent.LoggingIn.class,
                 (ClientPlayerNetworkEvent.LoggingIn event) -> callback.run());
     }
 
     @Override
     public void disconnected(Runnable callback) {
-        MinecraftForge.EVENT_BUS.addListener(
+        com.sammwy.retrocraft.compat.ForgeClientEvents.listen(
+                ClientPlayerNetworkEvent.LoggingOut.class,
                 (ClientPlayerNetworkEvent.LoggingOut event) -> callback.run());
     }
 
     @Override
     public void tick(Consumer<Minecraft> callback) {
-        MinecraftForge.EVENT_BUS.addListener(
+        com.sammwy.retrocraft.compat.ForgeClientEvents.listen(
+                TickEvent.ClientTickEvent.Post.class,
                 (TickEvent.ClientTickEvent.Post event) -> callback.accept(Minecraft.getInstance()));
     }
 
     @Override
     public void frame(Runnable callback) {
-        MinecraftForge.EVENT_BUS.addListener(
+        com.sammwy.retrocraft.compat.ForgeClientEvents.listen(
+                TickEvent.RenderTickEvent.Pre.class,
                 (TickEvent.RenderTickEvent.Pre event) -> callback.run());
     }
 
     @Override
     public void hud(Consumer<GuiGraphics> callback) {
-        FMLJavaModLoadingContext.get()
-                .getModEventBus()
-                .addListener(
-                        (AddGuiOverlayLayersEvent event) ->
-                                event.getLayeredDraw()
-                                        .addWithCondition(
-                                                Ids.of("retrocraft", "downloads"),
-                                                (graphics, tick) -> callback.accept(graphics),
-                                                () -> Minecraft.getInstance().screen == null));
-        MinecraftForge.EVENT_BUS.addListener(
+        com.sammwy.retrocraft.compat.ForgeClientEvents.mod(
+                AddGuiOverlayLayersEvent.class,
+                (AddGuiOverlayLayersEvent event) ->
+                        event.getLayeredDraw()
+                                .addWithCondition(
+                                        Ids.of("retrocraft", "downloads"),
+                                        (graphics, tick) -> callback.accept(graphics),
+                                        () -> Minecraft.getInstance().screen == null));
+        com.sammwy.retrocraft.compat.ForgeClientEvents.listen(
+                ScreenEvent.Render.Post.class,
                 (ScreenEvent.Render.Post event) -> callback.accept(event.getGuiGraphics()));
     }
 
@@ -137,14 +141,19 @@ final class ForgeClient implements ClientNetwork.Backend, ClientPlatform.Backend
     }
 
     @Override
+    public boolean modelAvailable(ResourceLocation id) {
+        return ExtraModels.available(id);
+    }
+
+    @Override
     public void models(Collection<ResourceLocation> additions) {
         models.addAll(additions);
     }
 
     @Override
     public <T extends BlockEntity> void blockRenderer(
-            BlockEntityType<T> type, BlockEntityRendererProvider<T> renderer) {
-        renderers.add(event -> event.registerBlockEntityRenderer(type, renderer));
+            BlockEntityType<T> type, com.sammwy.retrocraft.platform.RendererFactory<T> renderer) {
+        renderers.add(event -> event.registerBlockEntityRenderer(type, renderer::create));
     }
 
     @Override

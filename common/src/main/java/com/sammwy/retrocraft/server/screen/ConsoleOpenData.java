@@ -8,11 +8,12 @@ public record ConsoleOpenData(ResourceLocation console, int lockedSlot) {
     public static final StreamCodec<RegistryFriendlyByteBuf, ConsoleOpenData> CODEC =
             new StreamCodec<>() {
                 public ConsoleOpenData decode(RegistryFriendlyByteBuf b) {
-                    return new ConsoleOpenData(b.readResourceLocation(), b.readInt());
+                    return new ConsoleOpenData(
+                            ResourceLocation.STREAM_CODEC.decode(b), b.readInt());
                 }
 
                 public void encode(RegistryFriendlyByteBuf b, ConsoleOpenData data) {
-                    b.writeResourceLocation(data.console);
+                    ResourceLocation.STREAM_CODEC.encode(b, data.console);
                     b.writeInt(data.lockedSlot);
                 }
             };

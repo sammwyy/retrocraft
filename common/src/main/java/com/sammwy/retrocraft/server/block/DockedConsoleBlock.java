@@ -136,7 +136,7 @@ public final class DockedConsoleBlock extends ConsoleBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
             Level world, BlockState state, BlockEntityType<T> type) {
-        return world.isClientSide
+        return world.isClientSide()
                 ? null
                 : createTickerHelper(type, entityType(), DockedConsoleBlockEntity::tick);
     }
@@ -144,7 +144,7 @@ public final class DockedConsoleBlock extends ConsoleBlock {
     @Override
     protected InteractionResult useWithoutItem(
             BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!world.isClientSide
+        if (!world.isClientSide()
                 && player instanceof ServerPlayer serverPlayer
                 && world.getBlockEntity(pos) instanceof DockedConsoleBlockEntity console)
             ConsoleMenus.open(serverPlayer, console);
@@ -165,7 +165,7 @@ public final class DockedConsoleBlock extends ConsoleBlock {
                 && world.getBlockEntity(pos) instanceof DockedConsoleBlockEntity console
                 && console.instance() == null
                 && console.cartridge().isEmpty()) {
-            if (!world.isClientSide) {
+            if (!world.isClientSide()) {
                 console.cartridge(stack.copyWithCount(1));
                 if (!player.isCreative()) stack.shrink(1);
             }
@@ -178,7 +178,7 @@ public final class DockedConsoleBlock extends ConsoleBlock {
             var slots = definition.componentSlots();
             for (int i = 0; i < slots.size(); i++)
                 if (slots.get(i).accepts(component) && console.component(i).isEmpty()) {
-                    if (!world.isClientSide) {
+                    if (!world.isClientSide()) {
                         console.component(i, stack.copyWithCount(1));
                         if (!player.isCreative()) stack.shrink(1);
                     }
@@ -191,7 +191,7 @@ public final class DockedConsoleBlock extends ConsoleBlock {
     @Override
     public void removed(Level world, BlockPos pos) {
         if (world.getBlockEntity(pos) instanceof DockedConsoleBlockEntity console) {
-            if (!world.isClientSide && Retrocraft.instances() != null)
+            if (!world.isClientSide() && Retrocraft.instances() != null)
                 Retrocraft.instances().powerOff(console);
             if (!console.hasInternalRom())
                 Containers.dropItemStack(

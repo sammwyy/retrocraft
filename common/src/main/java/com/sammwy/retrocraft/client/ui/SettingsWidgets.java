@@ -6,7 +6,6 @@ import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -44,7 +43,7 @@ final class SettingsWidgets {
     }
 
     /** A flat label button: accent fill when armed, quiet dark otherwise. */
-    static final class Flat extends AbstractWidget {
+    static final class Flat extends com.sammwy.retrocraft.compat.InputWidget {
         private final Runnable action;
         private boolean accent;
 
@@ -97,7 +96,7 @@ final class SettingsWidgets {
     }
 
     /** On/off pill with a sliding knob. */
-    static final class Toggle extends AbstractWidget {
+    static final class Toggle extends com.sammwy.retrocraft.compat.InputWidget {
         private boolean value;
         private final Consumer<Boolean> onChange;
 
@@ -139,7 +138,7 @@ final class SettingsWidgets {
      * `‹ value ›` control cycling through enum/core choices. Left click steps forward, right click
      * back.
      */
-    static final class Cycle extends AbstractWidget {
+    static final class Cycle extends com.sammwy.retrocraft.compat.InputWidget {
         private final List<String> options;
         private int index;
         private final Consumer<String> onChange;
@@ -215,7 +214,7 @@ final class SettingsWidgets {
     }
 
     /** Tiny square action button with a pixel glyph and a tooltip, like {@link IconButton}. */
-    static final class Glyph extends AbstractWidget {
+    static final class Glyph extends com.sammwy.retrocraft.compat.InputWidget {
         private final String[] art;
         private final Runnable action;
 

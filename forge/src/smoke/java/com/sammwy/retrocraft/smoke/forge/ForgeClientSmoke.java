@@ -8,10 +8,10 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 @Mod("retrocraft_smoke")
 public final class ForgeClientSmoke {
-    public ForgeClientSmoke() {
-        FMLJavaModLoadingContext.get()
-                .getModEventBus()
-                .addListener(
-                        (FMLClientSetupEvent event) -> event.enqueueWork(ClientSmoke::install));
+    public ForgeClientSmoke(FMLJavaModLoadingContext context) {
+        com.sammwy.retrocraft.compat.ForgeEvents.mod(
+                context,
+                FMLClientSetupEvent.class,
+                (FMLClientSetupEvent event) -> event.enqueueWork(ClientSmoke::install));
     }
 }

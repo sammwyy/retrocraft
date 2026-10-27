@@ -7,6 +7,7 @@ import com.sammwy.retrocraft.client.InputControls;
 import com.sammwy.retrocraft.client.config.ControllerProfile;
 import com.sammwy.retrocraft.client.config.ControllerProfile.Action;
 import com.sammwy.retrocraft.compat.ClientGraphics;
+import com.sammwy.retrocraft.compat.UiPose;
 import com.sammwy.retrocraft.cores.worker.PadInput;
 import com.sammwy.retrocraft.server.net.Packets;
 
@@ -274,11 +275,14 @@ public final class PlayerHud {
         int[] cardW = new int[4];
         for (int i : order) {
             PlayerInfo entry = handler.getPlayerInfo(state.slots[i].player);
-            String name = entry != null ? entry.getProfile().getName() : "?";
+            String name =
+                    entry != null
+                            ? com.sammwy.retrocraft.compat.Profiles.name(entry.getProfile())
+                            : "?";
             names[i] = font.plainSubstrByWidth(name, 62);
             skins[i] =
                     entry != null
-                            ? entry.getSkin().texture()
+                            ? com.sammwy.retrocraft.compat.SkinTextures.texture(entry)
                             : DefaultPlayerSkin.getDefaultTexture();
             int tagW = Math.round(font.width("P" + (i + 1)) * .72f);
             int headerW = PAD + 8 + 3 + Math.round(font.width(names[i]) * .72f) + 5 + tagW + PAD;
@@ -297,7 +301,7 @@ public final class PlayerHud {
         int x = 4, rx = layoutWidth - 4 - rightW;
         long now = System.nanoTime();
 
-        var matrices = context.pose();
+        var matrices = UiPose.of(context);
         matrices.pushPose();
         float hudScale = Math.min(1f, width / (float) layoutWidth);
         if (hudScale < 1f) {
@@ -493,7 +497,7 @@ public final class PlayerHud {
             bg = lerp(0xF2FFFFFF, withAlpha(color, 0xE6), Math.min(1f, since / 90f));
             if (since < POP_MS) {
                 float pop = 1 + .3f * (1 - since / POP_MS);
-                var matrices = context.pose();
+                var matrices = UiPose.of(context);
                 matrices.pushPose();
                 matrices.translate(cx + CELL / 2f, cy + CELL / 2f, 0);
                 matrices.scale(pop, pop, 1);
@@ -531,7 +535,7 @@ public final class PlayerHud {
                         ? lerp(0xF2FFFFFF, withAlpha(color, 0xE6), Math.min(1f, since / 90f))
                         : 0xD0333A48;
         int fg = held ? lerp(0xFF14161C, 0xFFFFFFFF, Math.min(1f, since / 90f)) : 0xBAFFFFFF;
-        var matrices = context.pose();
+        var matrices = UiPose.of(context);
         matrices.pushPose();
         if (pop > 1.001f) {
             matrices.translate(x + w / 2f, y + CHIP_H / 2f, 0);
@@ -642,7 +646,7 @@ public final class PlayerHud {
             float y,
             int color,
             boolean shadow) {
-        var matrices = context.pose();
+        var matrices = UiPose.of(context);
         matrices.pushPose();
         matrices.translate(x, y, 0);
         matrices.scale(.72f, .72f, 1);
@@ -656,7 +660,7 @@ public final class PlayerHud {
      */
     private static void keyHint(
             GuiGraphics context, Font font, String key, float cx, float top, boolean held) {
-        var matrices = context.pose();
+        var matrices = UiPose.of(context);
         matrices.pushPose();
         matrices.translate(cx, top, 0);
         matrices.scale(.55f, .55f, 1);

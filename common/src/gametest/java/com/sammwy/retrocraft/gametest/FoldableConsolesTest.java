@@ -9,12 +9,11 @@ import com.sammwy.retrocraft.server.item.HandheldConsoleItem;
 import com.sammwy.retrocraft.server.screen.*;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
 
 public class FoldableConsolesTest implements GameTestPlatform {
-    @GameTest(template = EMPTY_STRUCTURE)
-    public void foldablesHaveIndependentItemsAndTheCorrectCartridgeAndCore(GameTestHelper context) {
+    @Scenario
+    public void foldablesHaveIndependentItemsAndTheCorrectCartridgeAndCore(
+            ScenarioContext context) {
         String[][] systems = {
             {"nds", "nds", "desmume"}, {"3ds", "3ds", "citra"}, {"gba_sp", "gba", "mgba"}
         };

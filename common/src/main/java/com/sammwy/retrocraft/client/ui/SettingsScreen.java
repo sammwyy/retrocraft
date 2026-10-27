@@ -121,7 +121,8 @@ public final class SettingsScreen extends AnimatedScreen {
     public static SettingsScreen modMenu(Screen parent) {
         var client = Minecraft.getInstance();
         if (client.player == null) return local(parent);
-        if (!client.player.hasPermissions(2)) return denied(parent, "operator");
+        if (!com.sammwy.retrocraft.compat.Access.operator(client.player))
+            return denied(parent, "operator");
         if (!SettingsClient.supported()) return denied(parent, "not_installed");
         return new SettingsScreen(parent, null, State.CONNECTING);
     }
@@ -562,7 +563,8 @@ public final class SettingsScreen extends AnimatedScreen {
             refreshFooter();
             return true;
         }
-        if (RetrocraftClient.SETTINGS_KEY.matches(key, scanCode)) {
+        if (com.sammwy.retrocraft.compat.ClientInput.matches(
+                RetrocraftClient.SETTINGS_KEY, key, scanCode)) {
             onClose();
             return true;
         }

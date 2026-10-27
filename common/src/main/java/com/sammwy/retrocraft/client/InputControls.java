@@ -15,13 +15,13 @@ public final class InputControls {
                 || !(client.screen instanceof ConsoleScreen screen)
                 || !screen.acceptingInput()) return PadInput.IDLE;
         var profile = ControllerProfile.of(screen.consoleId());
-        long window = client.getWindow().getWindow();
+        long window = com.sammwy.retrocraft.compat.ClientInput.window(client.getWindow());
         return screen.withTouch(
                 profile.sample(
                         ClientPreferences.get().controls(profile.id()),
                         key ->
                                 key >= 0
-                                        ? InputConstants.isKeyDown(window, key)
+                                        ? com.sammwy.retrocraft.compat.ClientInput.keyDown(key)
                                         : GLFW.glfwGetMouseButton(window, -key - 2)
                                                 == GLFW.GLFW_PRESS));
     }
@@ -39,7 +39,7 @@ public final class InputControls {
             case GLFW.GLFW_KEY_RIGHT_SHIFT -> "R Shift";
             case GLFW.GLFW_KEY_LEFT_CONTROL -> "L Ctrl";
             case GLFW.GLFW_KEY_RIGHT_CONTROL -> "R Ctrl";
-            default -> InputConstants.getKey(key, 0).getDisplayName().getString();
+            default -> InputConstants.Type.KEYSYM.getOrCreate(key).getDisplayName().getString();
         };
     }
 

@@ -58,7 +58,7 @@ public final class RetrocraftClient {
         DownloadHud.register();
         SETTINGS_KEY =
                 ClientPlatform.key(
-                        new KeyMapping(
+                        com.sammwy.retrocraft.compat.ClientInput.key(
                                 "key.retrocraft.settings",
                                 InputConstants.Type.KEYSYM,
                                 GLFW.GLFW_KEY_F8,
@@ -225,17 +225,14 @@ public final class RetrocraftClient {
                     var display =
                             new CreativeModeTab.ItemDisplayParameters(
                                     client.level.enabledFeatures(),
-                                    client.player.hasPermissions(2),
+                                    com.sammwy.retrocraft.compat.Access.operator(client.player),
                                     client.level.registryAccess());
                     RetrocraftItemGroups.CONSOLES.get().buildContents(display);
                     RetrocraftItemGroups.GAMES.get().buildContents(display);
                     RetrocraftItemGroups.ARCADES.get().buildContents(display);
                     CreativeModeTabs.searchTab().buildContents(display);
                     if (client.screen instanceof CreativeModeInventoryScreen screen)
-                        screen.init(
-                                client,
-                                client.getWindow().getGuiScaledWidth(),
-                                client.getWindow().getGuiScaledHeight());
+                        com.sammwy.retrocraft.compat.ClientScreens.refresh(screen);
                     catalogDirty = false;
                 });
         // Locally emulated frames are uploaded per rendered frame, not per tick, so in-world

@@ -10,12 +10,10 @@ import com.sammwy.retrocraft.server.item.CartridgeItem;
 import com.sammwy.retrocraft.server.screen.*;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
 
 public class ConsoleIdsTest implements GameTestPlatform {
-    @GameTest(template = EMPTY_STRUCTURE)
-    public void consolesAreNamedAfterTheirSystemAndMediaAfterItsKind(GameTestHelper context) {
+    @Scenario
+    public void consolesAreNamedAfterTheirSystemAndMediaAfterItsKind(ScenarioContext context) {
         var media =
                 Map.of(
                         "nes", "nes_cartridge",

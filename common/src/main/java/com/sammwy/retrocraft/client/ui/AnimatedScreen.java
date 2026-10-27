@@ -3,13 +3,14 @@ package com.sammwy.retrocraft.client.ui;
 import org.lwjgl.glfw.GLFW;
 
 import com.sammwy.retrocraft.compat.ClientGraphics;
+import com.sammwy.retrocraft.compat.UiPose;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /** Keeps the screen alive until its closing animation has finished. */
-abstract class AnimatedScreen extends Screen {
+abstract class AnimatedScreen extends com.sammwy.retrocraft.compat.InputScreen {
     private final UiMotion motion = new UiMotion();
     private Runnable afterClose;
 
@@ -36,14 +37,14 @@ abstract class AnimatedScreen extends Screen {
             return;
         }
         renderDimmer(context, visibility);
-        context.pose().pushPose();
+        UiPose.of(context).pushPose();
         try {
             UiDrawing.pop(context, width / 2f, height / 2f, visibility);
             renderContents(
                     context, acceptingInput() ? mouseX : -1, acceptingInput() ? mouseY : -1, delta);
         } finally {
             ClientGraphics.color(context, 1, 1, 1, 1);
-            context.pose().popPose();
+            UiPose.of(context).popPose();
         }
     }
 

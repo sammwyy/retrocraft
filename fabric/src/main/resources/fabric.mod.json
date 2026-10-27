@@ -15,7 +15,7 @@
   },
   "mixins": ["retrocraft.mixins.json"],
   "depends": {
-    "fabricloader": ">=0.16.14",
+    "fabricloader": ">=${fabricLoader}",
     "minecraft": "${minecraft}",
     "java": ">=${java}",
     "fabric-api": "*"

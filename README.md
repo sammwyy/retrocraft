@@ -4,7 +4,7 @@ Play real retro games inside Minecraft.
 
 Retrocraft adds handhelds, home consoles, arcade cabinets and CRT televisions to the game, all backed by actual [libretro](https://www.libretro.com/) emulator cores. Drop your ROMs on the server, grab a cartridge from the creative menu, plug it into a console and play — alone on a Game Boy in your pocket, or with friends gathered around a TV in your base.
 
-- Minecraft **1.21.1** · Fabric · Java 21
+- Fabric and Forge · Java 21 core · version-specific Minecraft integration
 - Works on dedicated servers and in singleplayer
 
 ## What's in the box
@@ -123,10 +123,10 @@ Cores are downloaded on demand from the [official libretro buildbot](https://bui
 1. Build the jar:
 
    ```sh
-   ./gradlew build
+   ./gradlew -Pmc=1.21.1 -Ploader=fabric build
    ```
 
-2. Install `build/libs/retrocraft-0.1.1.jar` together with Fabric API on the server and on every client.
+2. Install the matching JAR from `build/targets/<minecraft>/<loader>/libs/` on the server and every client. Fabric also requires **Fabric API**; Forge requires no additional dependency mods. Mod Menu is optional on Fabric. The emulator worker and its Java libraries are bundled in the JAR.
 
 3. Put your ROMs in `config/retrocraft/roms/` on the server (or upload them in-game via **F8 → Server → ROM Library** by picking files or dragging and dropping them onto the window). Detection uses deterministic file extensions and, for shared formats, platform folders (`megadrive`/`genesis`, `ps1`/`psx`/`playstation`, `ps2`/`playstation2`, `dreamcast`/`dc`, `wii`, `gamecube`/`ngc`, `psp`/`playstation portable`). Console-unique formats (`.nes`, `.sfc`/`.smc`, `.gb`, `.gbc`, `.gba`, `.nds`/`.ids`, `.3ds`/`.3dsx`/`.cci`/`.cxi`/`.app`, `.md`/`.gen`/`.smd`, `.z64`/`.n64`/`.v64`, `.pbp`, `.cso`/`.zso`, `.cdi`/`.gdi`, `.wbfs`/`.rvz`/`.wad`/`.dol`, `.gcm`/`.gcz`/`.nkit`) match anywhere; shared disc images (`.iso`, `.chd`, `.cue`, `.img`) match inside their platform folder. ROM headers and archive contents are never inspected during discovery. Known MAME ZIP basenames stay intact and resolve to their full arcade titles. Games use content hashes for identity.
 
@@ -170,16 +170,35 @@ The `cores` key stores the mappings to the trusted, compatible core pool. Person
 
 ## Development
 
+Target versions and pinned loader dependencies live in [`gradle/targets.json`](gradle/targets.json). Each entry represents a supported API boundary; artifacts declare the exact Minecraft version they were built for. Fabric starts at 1.20.5, Forge at 1.20.6. Versions through 1.21.11 use Java 21; 26.x uses Java 25 for Minecraft while the core and worker remain Java 21 bytecode. Set `JAVA21_HOME` and `JAVA25_HOME` when both JDKs are installed.
+
 ```sh
-./gradlew spotlessApply
-./gradlew build
-./gradlew runGameTest
-RETROCRAFT_TEST_CORE=/path/to/fceumm_libretro.so ./gradlew test
+./gradlew spotlessApply --offline
+./gradlew -Pmc=1.21.1 -Ploader=fabric build
+./gradlew -Pmc=1.21.8 -Ploader=forge --no-daemon build
+./tools/gradle-modern -Pmc=1.21.11 -Ploader=fabric build
+./tools/gradle-modern -Pmc=26.3 -Ploader=forge --no-daemon build
+python3 tools/check_matrix.py
 ```
 
-`build` runs formatting checks, JUnit tests and headless Fabric GameTests for concurrent cartridge access, controller packets and arcade variants. `runGameTest` runs the Minecraft regression by itself. Test code and the test mod are excluded from the release jar.
+Use `./gradlew` through 1.21.10 and `./tools/gradle-modern` for 1.21.11 and 26.x. The latter downloads its separate Gradle wrapper into `build/`. Defaults are Minecraft 1.21.1 and Fabric. `-Ploader=none` builds only the core and worker. Forge runs use a fresh daemon because older ForgeGradle versions retain Minecraft state between projects.
 
-Native NES tests use an original homebrew ROM and require `RETROCRAFT_TEST_CORE`. Game Link tests use two original homebrew GB ROMs and require `RETROCRAFT_TEST_GB_CORE` pointing to a network-enabled Gambatte core. N64 tests additionally accept `RETROCRAFT_TEST_N64_CORE` and `RETROCRAFT_TEST_N64_ROM`. Download tests require `RETROCRAFT_TEST_DOWNLOAD=true`; MAME tests require their corresponding `RETROCRAFT_TEST_MAME_*` variables. Optional native tests are skipped when their inputs are absent. Committed textures and models require no asset-generation tools to build. For asset development, `python3 tools/generate_models.py` rebuilds them, `--check` verifies reproducibility, and `python3 tools/check_models.py` checks references, geometry and screen alignment. `python3 tools/preview_models.py` writes review images to `tmp/model-previews/`. `python3 tools/generate_hud_frames.py` rebuilds the handheld background/overlay textures; `--check` verifies them. `python3 tools/generate_component_art.py` rebuilds the peripheral item textures and models. These optional tools use Pillow; previews also use NumPy.
+`build` runs formatting checks, JUnit and the shared headless GameTests, including registration, cartridge ownership, controller packets, persistence and block drops. `runGameTest` runs only the Minecraft suite. `-Psmoke runClient` exercises model loading, live handheld textures and native keyboard input, then closes automatically. The matrix runner runs both suites plus the client for every profile, checks packaged metadata and Java bytecode, and records logs and results under `build/matrix/`. Linux headless client runs need Xvfb, Mesa and OpenAL. `--versions`, `--loaders`, `--offline` and `--no-client` narrow the run. Test mods never ship in release JARs.
+
+The maintained source layout separates responsibilities:
+
+| Directory | Responsibility |
+| --- | --- |
+| `core/` | Minecraft-independent emulation, ROMs, BIOS, configuration, saves and worker protocol; Java 21 |
+| `worker/` | Isolated native emulator process and bundled runtime libraries; Java 21 |
+| `common/` | Shared Minecraft gameplay, menus, rendering, packets, assets and regression scenarios |
+| `fabric/`, `forge/` | Native loader entry points, registration and events |
+| `compat/` | Small adapters selected by API boundary, plus mechanical Mojang class renames in `symbols.json` |
+| `gradle/` | Target profiles and shared generation, packaging and test configuration |
+
+Gameplay and assets have one source. Class renames are applied to generated build sources; behavioral API changes use explicit adapters. There is one release JAR per target and loader, with no Architectury or conversion mod required. Outputs and development worlds stay under `build/`; `clean` removes them, so keep ROM libraries and worlds intended for reuse outside development run directories.
+
+Native NES tests use an original homebrew ROM and require `RETROCRAFT_TEST_CORE`. Game Link tests use two original homebrew GB ROMs and require `RETROCRAFT_TEST_GB_CORE` pointing to a network-enabled Gambatte core. N64 tests additionally accept `RETROCRAFT_TEST_N64_CORE` and `RETROCRAFT_TEST_N64_ROM`. Download tests require `RETROCRAFT_TEST_DOWNLOAD=true`; MAME tests require their corresponding `RETROCRAFT_TEST_MAME_*` variables. Optional native tests are skipped when their inputs are absent. Committed textures and models require no asset-generation tools to build. For asset development, `python3 tools/generate_models.py` rebuilds them, `--check` verifies reproducibility, and `python3 tools/check_models.py` checks references, geometry and screen alignment. `python3 tools/preview_models.py` writes review images to `build/previews/models/`. `python3 tools/generate_hud_frames.py` rebuilds the handheld background/overlay textures; `--check` verifies them. `python3 tools/generate_component_art.py` rebuilds the peripheral item textures and models. These optional tools use Pillow; previews also use NumPy.
 
 Every console is a class implementing `ConsoleDefinition` (built-ins live in `server.console.builtin` and are listed in `Consoles.ALL`); `ConsoleRegistry.register(console)` calls its `register()`, which registers everything it brings: its system's media item, its accepted component items and its own item, block and block entity type. Extend `HandheldConsole`, `DockedConsole` or `ArcadeConsole` rather than implementing the interface directly. A console declares its `GameSystem` (e.g. `retrocraft:ps2`), which owns ROM discovery, the compatible cores (first is the default), the required `BiosRequirement` and catalog identity, and registers one media item named after its `MediaKind`: `nes_cartridge`, `nds_card`, `psp_umd`, `ps2_disc`, `arcade_board`. Consoles of the same system share one `GameSystem` constant. `KnownCores.defaultMappings()`, `RomFormats.ALL` and BIOS checks are derived from these declarations. Consoles are named after their system (`nes`, `gba`, `ps2`, `arcade`); only alternative hardware of the same system carries a suffix (`nes_handheld`, `gba_sp`, `genesis`, `arcade_tetris`, `arcade_cabinet`). A console also declares its outline bounds, whether it is listed in the creative tab or carries a permanent internal ROM, and its `ComponentSlot`s. A `ConsoleComponent` maps each core ID to a `HardwareProfile` (core option overrides, controller port devices, light-gun pointer source); a slot can also declare the hardware seen when it is empty. The worker only applies option values and devices the core itself advertises. `ConsoleType` distinguishes `HANDHELD`, `DOCKED` and `ARCADE`; the two placed types share multiplayer and world-video paths, while only `DOCKED` uses televisions. Adding a new system means declaring it with its discovery strategy and one or more consoles; client presentation is keyed by console ID in `ControllerProfile` (pad, HUD button layout and stick labels), `ConsoleTheme` (bezel colours) and, for handhelds, a `ConsoleHudRenderer`: two texture layers surround the video, with runtime layout and shared touch geometry. Client code lives in `client.ui` (screens, widgets and the HUD API), `client.render` (world and item renderers), `client.media` (video/audio streams) and `client.net` (hybrid emulation and settings channels). See [the handheld HUD API guide](docs/CONSOLE_HUD_API.md) for registration and customization. Docked consoles continue to use nearby televisions; arcade machines use their own model screens.
 

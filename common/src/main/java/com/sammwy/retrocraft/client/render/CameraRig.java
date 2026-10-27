@@ -27,7 +27,7 @@ public final class CameraRig {
     public static void focus(BlockPos pos) {
         screen = pos;
         active = true;
-        Minecraft.getInstance().gameRenderer.setRenderHand(false);
+        com.sammwy.retrocraft.compat.ClientView.renderHand(false);
     }
 
     public static void release() {
@@ -41,7 +41,7 @@ public final class CameraRig {
         screen = null;
         zoomIndex = 2;
         eased = 1f;
-        Minecraft.getInstance().gameRenderer.setRenderHand(true);
+        com.sammwy.retrocraft.compat.ClientView.renderHand(true);
     }
 
     /** Steps the zoom in ({@code direction > 0}) or out, clamped to {@link #ZOOM_STEPS}. */
@@ -68,7 +68,7 @@ public final class CameraRig {
         Target target = screen == null || client.level == null ? null : target(client);
         if (blend <= 0 || target == null) {
             if (!active && screen != null) {
-                client.gameRenderer.setRenderHand(true);
+                com.sammwy.retrocraft.compat.ClientView.renderHand(true);
                 screen = null;
             }
             return null;

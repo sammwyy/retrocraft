@@ -1,9 +1,14 @@
 plugins {
+    id 'java'
     id 'net.minecraftforge.gradle' version '7.0.40'
 }
 
 apply from: rootProject.file('gradle/platform.gradle')
 base { archivesName = "retrocraft-${rootProject.minecraftVersion}-forge" }
+
+fgtools.configure('slimelauncher') {
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(rootProject.target.java) }
+}
 
 repositories {
     minecraft.mavenizer(it)
@@ -17,8 +22,6 @@ dependencies {
 }
 
 sourceSets.main {
-    java.srcDir rootProject.file('core/src/main/java')
-    java.srcDir rootProject.file('worker/src/main/java')
     resources.srcDir rootProject.file('core/src/main/resources')
 }
 sourceSets {
@@ -29,6 +32,8 @@ sourceSets {
         runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
     }
 }
+configurations.gametestImplementation.extendsFrom configurations.implementation
+configurations.smokeImplementation.extendsFrom configurations.implementation
 
 minecraft {
     runs {
@@ -39,11 +44,13 @@ minecraft {
                 retrocraft { source sourceSets.main }
                 if (project.hasProperty('smoke')) { retrocraft_smoke { source sourceSets.smoke } }
             }
+            if (project.hasProperty('smoke')) with(sourceSets.smoke) {}
         }
         register('client')
         register('server') { args '--nogui' }
         register('gameTestServer') {
             mods { retrocraft_test { source sourceSets.gametest } }
+            with(sourceSets.gametest) {}
         }
     }
 }
@@ -61,5 +68,40 @@ sourceSets.each {
     it.java.destinationDirectory = output
 }
 
-tasks.register('runGameTest') { dependsOn 'runGameTestServer' }
+tasks.register('runGameTest') { dependsOn 'runGametestGameTestServer' }
+if (project.hasProperty('smoke')) {
+    tasks.matching { it.name == 'runClient' }.configureEach {
+        enabled = false
+        dependsOn 'runSmokeClient'
+    }
+}
+tasks.withType(JavaExec).configureEach {
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(rootProject.target.java) }
+    if (name.endsWith('GameTestServer')) {
+        doFirst { new File(workingDir, 'logs/latest.log').delete() }
+        doLast {
+            def log = new File(workingDir, 'logs/latest.log')
+            def completed = log.exists() ? (log.text =~ /All (\d+) required tests passed/) : null
+            def expected = rootProject.fileTree('common/src/gametest/java').matching { include '**/*Test.java' }.files.sum { (it.text =~ /@Scenario/).count }
+            if (!completed || completed.collect { it[1].toInteger() }.last() < expected) {
+                throw new GradleException('The shared GameTest suite did not complete successfully; inspect logs/latest.log')
+            }
+        }
+    }
+}
 check.dependsOn 'runGameTest'
+
+apply from: rootProject.file('gradle/gametests.gradle')
+
+// Keep the core/worker bytecode identical for both loaders, including Java 25 game targets.
+// One merged output directory also avoids split packages on Forge's development module path.
+tasks.named('compileJava') {
+    dependsOn project(':core').tasks.named('compileJava'), project(':worker').tasks.named('compileJava')
+    doLast {
+        project.copy {
+            from project(':core').sourceSets.main.output.classesDirs
+            from project(':worker').sourceSets.main.output.classesDirs
+            into destinationDirectory
+        }
+    }
+}

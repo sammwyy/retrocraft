@@ -33,7 +33,7 @@ spotless {
     java {
         target 'common/src/**/*.java', 'core/src/**/*.java', 'worker/src/**/*.java',
                 'fabric/src/**/*.java', 'forge/src/**/*.java', 'compat/**/*.java'
-        googleJavaFormat('1.24.0').aosp()
+        googleJavaFormat('1.30.0').aosp()
         removeUnusedImports()
         importOrder('java', 'javax', 'org', 'com', 'net', '')
     }

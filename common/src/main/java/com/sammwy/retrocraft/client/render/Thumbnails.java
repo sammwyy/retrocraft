@@ -21,7 +21,6 @@ import com.sammwy.retrocraft.server.net.Packets;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
@@ -80,7 +79,6 @@ public final class Thumbnails {
                     || entry.height != image.getHeight()) {
                 release(packet.instance());
                 texture = TextureImages.create(image);
-                texture.setFilter(false, false);
                 ResourceLocation id = Ids.of("retrocraft", "thumbnail/" + packet.instance());
                 Minecraft.getInstance().getTextureManager().register(id, texture);
                 textures.put(packet.instance(), texture);
@@ -186,7 +184,7 @@ public final class Thumbnails {
         float cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
         Matrix4f matrix = matrices.last().pose();
         quad(
-                vertices.getBuffer(RenderType.entitySolid(texture)),
+                vertices.getBuffer(com.sammwy.retrocraft.compat.Materials.entitySolid(texture)),
                 matrix,
                 x0,
                 y0,
@@ -199,7 +197,7 @@ public final class Thumbnails {
                 u1,
                 v1);
         quad(
-                vertices.getBuffer(RenderType.entityCutoutNoCull(texture)),
+                vertices.getBuffer(com.sammwy.retrocraft.compat.Materials.cutout(texture)),
                 matrix,
                 cx - fw / 2,
                 cy - fh / 2,

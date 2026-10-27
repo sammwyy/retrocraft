@@ -4,7 +4,6 @@ import java.util.UUID;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 /** Console <-> television binding. Both sides store the link so neither can be left orphaned. */
@@ -17,10 +16,10 @@ public final class Televisions {
         BlockPos origin = console.getBlockPos();
         TvBlockEntity best = null;
         double bestDistance = Double.MAX_VALUE;
-        ChunkPos min = new ChunkPos(origin.offset(-RADIUS, 0, -RADIUS)),
-                max = new ChunkPos(origin.offset(RADIUS, 0, RADIUS));
-        for (int cx = min.x; cx <= max.x; cx++)
-            for (int cz = min.z; cz <= max.z; cz++) {
+        int minX = (origin.getX() - RADIUS) >> 4, maxX = (origin.getX() + RADIUS) >> 4;
+        int minZ = (origin.getZ() - RADIUS) >> 4, maxZ = (origin.getZ() + RADIUS) >> 4;
+        for (int cx = minX; cx <= maxX; cx++)
+            for (int cz = minZ; cz <= maxZ; cz++) {
                 LevelChunk chunk = world.getChunkSource().getChunk(cx, cz, false);
                 if (chunk == null) continue;
                 for (var entity : chunk.getBlockEntities().values()) {

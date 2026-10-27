@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Use a separate cached Gradle wrapper for Minecraft releases that require Java 25."""
+"""Use a separate cached Gradle wrapper for Minecraft targets using Loom 1.17 or ForgeGradle 7."""
 import os
+import json
 from pathlib import Path
 import shutil
 import sys
@@ -17,10 +18,20 @@ validateDistributionUrl=true
 zipStoreBase=GRADLE_USER_HOME
 zipStorePath=wrapper/dists
 """)
-java_home = os.environ.get("JAVA25_HOME", "/usr/lib/jvm/java-25-openjdk")
+minecraft = next((arg.split("=", 1)[1] for arg in sys.argv[1:] if arg.startswith("-Pmc=")), "1.21.1")
+level = json.loads((root / "gradle/targets.json").read_text())[minecraft]["java"]
+java_home = os.environ.get(f"JAVA{level}_HOME")
+if java_home is None:
+    candidate = os.environ.get("JAVA_HOME")
+    if candidate and (level == 21 or f'JAVA_VERSION="{level}' in (Path(candidate) / "release").read_text()):
+        java_home = candidate
+    elif level == 25 and Path("/usr/lib/jvm/java-25-openjdk").exists():
+        java_home = "/usr/lib/jvm/java-25-openjdk"
+    else:
+        java_home = str(Path(shutil.which("java") or "").resolve().parent.parent)
 java = Path(java_home) / "bin/java"
 if not java.exists():
-    raise SystemExit("Set JAVA25_HOME to an installed JDK 25")
+    raise SystemExit(f"Set JAVA{level}_HOME to an installed JDK {level}")
 environment = os.environ.copy()
 environment["JAVA_HOME"] = java_home
 os.execve(java, [str(java), "-classpath", str(launcher / "gradle-wrapper.jar"),

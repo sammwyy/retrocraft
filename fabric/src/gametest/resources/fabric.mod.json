@@ -6,13 +6,13 @@
   "environment": "server",
   "entrypoints": {
     "fabric-gametest": [
-      "com.sammwy.retrocraft.gametest.ConsoleInventoryTest",
-      "com.sammwy.retrocraft.gametest.ArcadeVariantsTest",
-      "com.sammwy.retrocraft.gametest.ControllerPacketsTest",
-      "com.sammwy.retrocraft.gametest.FoldableConsolesTest",
-      "com.sammwy.retrocraft.gametest.PspConsoleTest",
-      "com.sammwy.retrocraft.gametest.ConsoleIdsTest",
-      "com.sammwy.retrocraft.gametest.ConsoleComponentsTest"
+      "com.sammwy.retrocraft.gametest.generated.ConsoleInventoryTest",
+      "com.sammwy.retrocraft.gametest.generated.ArcadeVariantsTest",
+      "com.sammwy.retrocraft.gametest.generated.ControllerPacketsTest",
+      "com.sammwy.retrocraft.gametest.generated.FoldableConsolesTest",
+      "com.sammwy.retrocraft.gametest.generated.PspConsoleTest",
+      "com.sammwy.retrocraft.gametest.generated.ConsoleIdsTest",
+      "com.sammwy.retrocraft.gametest.generated.ConsoleComponentsTest"
     ]
   },
   "depends": {

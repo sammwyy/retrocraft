@@ -1,6 +1,7 @@
 package com.sammwy.retrocraft.client.ui;
 
 import com.sammwy.retrocraft.compat.ClientGraphics;
+import com.sammwy.retrocraft.compat.UiPose;
 import com.sammwy.retrocraft.cores.transfer.Downloads;
 import com.sammwy.retrocraft.platform.ClientPlatform;
 
@@ -30,14 +31,14 @@ public final class DownloadHud {
         var cards = NOTIFICATIONS.update(entries, count, now);
         if (cards.isEmpty()) return;
         var tr = client.font;
-        context.pose().pushPose();
-        context.pose().translate(0, 0, 400);
+        UiPose.of(context).pushPose();
+        UiPose.of(context).translate(0, 0, 400);
         for (var card : cards) {
             var entry = card.entry;
             int y = 8 + card.slot * 60;
             float visibility = card.motion.value(now);
-            context.pose().pushPose();
-            context.pose().translate((width + 12) * (1f - visibility), 0, 0);
+            UiPose.of(context).pushPose();
+            UiPose.of(context).translate((width + 12) * (1f - visibility), 0, 0);
             ClientGraphics.color(context, 1, 1, 1, visibility);
             boolean failed = entry.state() == Downloads.State.FAILED;
             int accent =
@@ -99,7 +100,7 @@ public final class DownloadHud {
                     SettingsWidgets.MUTED,
                     false);
             ClientGraphics.color(context, 1, 1, 1, 1);
-            context.pose().popPose();
+            UiPose.of(context).popPose();
         }
         if (entries.size() > count)
             context.drawString(
@@ -109,7 +110,7 @@ public final class DownloadHud {
                     8 + count * 60,
                     SettingsWidgets.MUTED,
                     true);
-        context.pose().popPose();
+        UiPose.of(context).popPose();
     }
 
     private DownloadHud() {}

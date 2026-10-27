@@ -2,8 +2,8 @@ package com.sammwy.retrocraft.server.block;
 
 import java.util.UUID;
 
-import com.sammwy.retrocraft.compat.LifecycleBlockEntity;
-import com.sammwy.retrocraft.compat.TagData;
+import com.sammwy.retrocraft.compat.PersistentBlockEntity;
+import com.sammwy.retrocraft.platform.StateData;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * Holds the emulation instance currently shown on this set and the console block it is bound to.
  */
-public final class TvBlockEntity extends LifecycleBlockEntity {
+public final class TvBlockEntity extends PersistentBlockEntity {
     private UUID instance;
     private BlockPos console;
 
@@ -54,7 +54,7 @@ public final class TvBlockEntity extends LifecycleBlockEntity {
 
     private void changed() {
         setChanged();
-        if (level == null || level.isClientSide) return;
+        if (level == null || level.isClientSide()) return;
         BlockState before = getBlockState(),
                 after = before.setValue(TvBlock.POWERED, instance != null);
         if (!before.equals(after)) level.setBlock(worldPosition, after, Block.UPDATE_CLIENTS);
@@ -72,20 +72,15 @@ public final class TvBlockEntity extends LifecycleBlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
-        super.saveAdditional(nbt, registries);
-        if (instance != null) TagData.uuid(nbt, "InstanceID", instance);
-        if (console != null) nbt.putLong("Console", console.asLong());
+    protected void saveState(StateData.Output nbt) {
+        if (instance != null) nbt.uuid("InstanceID", instance);
+        if (console != null) nbt.longValue("Console", console.asLong());
     }
 
     @Override
-    protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
-        super.loadAdditional(nbt, registries);
-        instance = TagData.uuid(nbt, "InstanceID");
-        console =
-                TagData.longValue(nbt, "Console") == null
-                        ? null
-                        : BlockPos.of(TagData.longValue(nbt, "Console"));
+    protected void loadState(StateData.Input nbt) {
+        instance = nbt.uuid("InstanceID");
+        console = nbt.longValue("Console") == null ? null : BlockPos.of(nbt.longValue("Console"));
     }
 
     /**

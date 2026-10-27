@@ -6,18 +6,19 @@ import org.lwjgl.glfw.GLFW;
 
 import com.sammwy.retrocraft.compat.ClientGraphics;
 import com.sammwy.retrocraft.compat.ContentProperties;
+import com.sammwy.retrocraft.compat.UiPose;
 import com.sammwy.retrocraft.server.console.component.ComponentStorage;
 import com.sammwy.retrocraft.server.screen.ConsoleScreenHandler;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
-public final class ConsoleInventoryScreen extends AbstractContainerScreen<ConsoleScreenHandler> {
+public final class ConsoleInventoryScreen
+        extends com.sammwy.retrocraft.compat.InputContainerScreen<ConsoleScreenHandler> {
     private SettingsWidgets.Flat power, eject;
     private final UiMotion motion = new UiMotion();
     private final ConsoleTheme theme;
@@ -25,9 +26,7 @@ public final class ConsoleInventoryScreen extends AbstractContainerScreen<Consol
 
     public ConsoleInventoryScreen(
             ConsoleScreenHandler handler, Inventory inventory, Component title) {
-        super(handler, inventory, title);
-        imageWidth = 176;
-        imageHeight = 176;
+        super(handler, inventory, title, 176, 176);
         inventoryLabelY = 82;
         theme = ConsoleTheme.of(handler.definition().id().getPath());
         consoleStack =
@@ -185,7 +184,7 @@ public final class ConsoleInventoryScreen extends AbstractContainerScreen<Consol
                     Component.literal("  ")
                             .append(component.displayName())
                             .withStyle(ChatFormatting.GRAY));
-        context.renderComponentTooltip(font, lines, mouseX, mouseY);
+        com.sammwy.retrocraft.compat.UiTooltips.show(context, font, lines, mouseX, mouseY);
     }
 
     @Override
@@ -203,7 +202,7 @@ public final class ConsoleInventoryScreen extends AbstractContainerScreen<Consol
             return;
         }
         context.fill(0, 0, width, height, (int) (160 * visibility) << 24);
-        context.pose().pushPose();
+        UiPose.of(context).pushPose();
         try {
             UiDrawing.pop(
                     context, leftPos + imageWidth / 2f, topPos + imageHeight / 2f, visibility);
@@ -215,7 +214,7 @@ public final class ConsoleInventoryScreen extends AbstractContainerScreen<Consol
             }
         } finally {
             ClientGraphics.color(context, 1, 1, 1, 1);
-            context.pose().popPose();
+            UiPose.of(context).popPose();
         }
     }
 
@@ -257,7 +256,9 @@ public final class ConsoleInventoryScreen extends AbstractContainerScreen<Consol
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
         if (!motion.shown()) return true;
-        if (key == GLFW.GLFW_KEY_ESCAPE || minecraft.options.keyInventory.matches(key, scanCode)) {
+        if (key == GLFW.GLFW_KEY_ESCAPE
+                || com.sammwy.retrocraft.compat.ClientInput.matches(
+                        minecraft.options.keyInventory, key, scanCode)) {
             onClose();
             return true;
         }

@@ -35,7 +35,7 @@ public final class HandheldConsoleItem extends ConsoleItem {
 
     @Override
     protected void activate(Level world, Player player, ItemStack stack) {
-        if (!world.isClientSide
+        if (!world.isClientSide()
                 && player instanceof ServerPlayer serverPlayer
                 && Retrocraft.instances() != null)
             ConsoleMenus.open(serverPlayer, new HandheldHost(serverPlayer, stack));

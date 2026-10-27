@@ -18,19 +18,49 @@ sourceSets {
 def legacy = rootProject.minecraftVersion in ['1.20.5', '1.20.6', '1.21.1']
 def oldItems = legacy || rootProject.minecraftVersion == '1.21.3'
 def oldNbt = rootProject.minecraftVersion in ['1.20.5', '1.20.6', '1.21.1', '1.21.3', '1.21.4']
+def oldGui = oldNbt || rootProject.minecraftVersion == '1.21.5'
+def oldInput = oldGui || rootProject.minecraftVersion == '1.21.8'
+def oldIdentifiers = rootProject.minecraftVersion != '1.21.11' && !rootProject.minecraftVersion.startsWith('26.')
+def unobfuscated = rootProject.minecraftVersion.startsWith('26.')
+def splitGui = rootProject.minecraftVersion in ['26.2', '26.3']
 def compatibility = [
+        'hud-state': splitGui ? 'modern' : 'legacy',
+        matrices: splitGui ? 'modern' : 'legacy',
+        'world-text': oldInput ? 'legacy' : 'queued',
+        'model-geometry': oldNbt ? 'none' : unobfuscated ? 'extracted' : 'modern',
+        'container-size': unobfuscated ? 'modern' : 'legacy',
+        characters: oldInput ? 'none' : unobfuscated ? 'modern' : 'legacy',
+        "hud-${project.name}": unobfuscated ? 'modern' : 'legacy',
+        camera: oldIdentifiers ? 'legacy' : unobfuscated ? 'extracted' : 'modern',
+        permissions: oldIdentifiers ? 'legacy' : 'modern',
+        materials: oldIdentifiers ? 'legacy' : 'modern',
+        buttons: oldIdentifiers ? 'legacy' : 'modern',
+        'line-width': oldIdentifiers ? 'legacy' : 'modern',
+        "events-${project.name}": oldGui ? 'legacy' : 'modern',
+        "client-events-${project.name}": oldGui ? 'legacy' : oldInput ? '1.21.8' : 'modern',
+        input: oldInput ? 'legacy' : 'modern',
+        items: oldInput ? 'legacy' : 'queued',
+        profiles: oldInput ? 'legacy' : 'modern',
+        "frame-${project.name}": oldInput ? 'legacy' : 'modern',
+        storage: oldGui ? 'nbt' : 'value',
+        'gui-pose': oldGui ? 'legacy' : 'modern',
+        'gui-tooltip': oldGui ? 'legacy' : 'modern',
+        view: oldGui ? 'legacy' : unobfuscated ? 'extracted' : 'modern',
         nbt: oldNbt ? 'legacy' : 'modern',
         tooltip: oldNbt ? 'legacy' : 'modern',
-        'block-render': oldNbt ? 'legacy' : 'modern',
+        'block-render': oldNbt ? 'legacy' : oldGui ? 'modern' : oldInput ? '1.21.8' : 'queued',
         lifecycle: oldNbt ? 'legacy' : 'modern',
-        texture: oldNbt ? 'legacy' : 'modern',
-        "models-${project.name}": oldNbt ? 'legacy' : 'modern',
+        texture: oldNbt ? 'legacy' : oldIdentifiers ? 'modern' : 'sampler',
+        "models-${project.name}": project.name == 'fabric' ? (oldNbt ? 'legacy' : 'modern') : legacy ? 'legacy' : oldItems ? '1.21.3' : oldNbt ? '1.21.4' : 'modern',
+        "types-${project.name}": legacy ? 'legacy' : 'modern',
         vertices: rootProject.minecraftVersion.startsWith('1.20.') ? 'legacy' : 'modern',
         interaction: legacy ? 'legacy' : 'modern',
         content: legacy ? 'legacy' : 'modern',
-        graphics: legacy ? 'legacy' : 'modern',
-        'item-render': legacy ? 'legacy' : oldItems ? '1.21.3' : 'modern',
+        graphics: legacy ? 'legacy' : oldGui ? 'modern' : 'pipeline',
+        'item-render': legacy ? 'legacy' : oldItems ? '1.21.3' : oldNbt ? 'modern' : oldInput ? '1.21.5' : 'queued',
         'item-model': oldItems ? 'legacy' : 'modern',
+        'item-layer': oldNbt ? 'none' : unobfuscated ? 'extracted' : 'modern',
+        'item-resolver': oldItems ? 'none' : oldNbt ? '1.21.4' : 'modern',
         'block-clone': oldItems ? 'legacy' : 'modern',
         'model-data': oldItems ? 'legacy' : 'modern'
 ]
@@ -101,6 +131,12 @@ def packMetadata = tasks.register('generatePackMetadata') {
         if (rootProject.target.containsKey('pack_resource_minor')) {
             pack.min_format = [resource, rootProject.target.pack_resource_minor]
             pack.max_format = [data, rootProject.target.pack_data_minor]
+            // One mod contains both a resource pack and a data pack. A resource format below
+            // 82 also declares legacy data formats, which require these compatibility fields.
+            if (resource < 82) {
+                pack.pack_format = resource
+                pack.supported_formats = [resource, 81]
+            }
         } else {
             pack.pack_format = resource
             pack.supported_formats = [Math.min(resource, data), Math.max(resource, data)]
@@ -124,14 +160,18 @@ tasks.withType(ProcessResources).configureEach {
     }
 }
 
+def mixinCompatibility = rootProject.target.java == 25 ? 'JAVA_25' : project.name == 'forge' && rootProject.minecraftVersion == '1.20.6' ? 'JAVA_17' : 'JAVA_21'
+def clientMixins = ['CameraMixin', 'ItemRendererMixin', 'ItemModelPropertiesAccessor']
+if (!oldItems) clientMixins.add('ItemModelResolverMixin')
+if (!oldNbt) clientMixins.add('ItemLayerAccessor')
+if (!oldGui) clientMixins.addAll(['ClientViewMixin', 'GuiTintMixin'])
+if (project.name == 'forge' && rootProject.minecraftVersion == '1.21.3') clientMixins.add('StandaloneModelsMixin')
 processResources {
-    inputs.property 'mixinCompatibility', rootProject.target.java == 25 ? 'JAVA_25' : project.name == 'forge' && rootProject.minecraftVersion == '1.20.6' ? 'JAVA_17' : 'JAVA_21'
+    inputs.property 'mixinCompatibility', mixinCompatibility
+    inputs.property 'clientMixins', clientMixins
     filesMatching('retrocraft.mixins.json') {
         filter { line ->
-            def value = oldItems ? line.replace(', "ItemModelResolverMixin"', '') : line
-            if (project.name == 'forge' && rootProject.minecraftVersion == '1.20.6') value = value.replace('JAVA_21', 'JAVA_17')
-            if (rootProject.target.java == 25) value = value.replace('JAVA_21', 'JAVA_25')
-            value
+            line.contains('"client"') ? '  "client": ' + groovy.json.JsonOutput.toJson(clientMixins) + ',' : line.replace('JAVA_21', mixinCompatibility)
         }
     }
 }
@@ -161,3 +201,22 @@ test {
 }
 
 tasks.named('check') { dependsOn rootProject.tasks.named('spotlessCheck') }
+
+if (project.name == 'forge' && !oldItems) {
+    def definitions = tasks.register('generateExtraModelDefinitions') {
+        def input = rootProject.file('common/src/main/resources/assets/retrocraft/models/block')
+        def output = layout.buildDirectory.dir('generated/extraModelDefinitions')
+        inputs.dir input
+        outputs.dir output
+        doLast {
+            def directory = output.get().dir('assets/retrocraft/blockstates/extra/block').asFile
+            directory.mkdirs()
+            input.eachFileMatch(~/arcade.*\.json/) { model ->
+                new File(directory, model.name).text = groovy.json.JsonOutput.toJson([variants: ['': [model: "retrocraft:block/${model.name[0..-6]}"]]])
+            }
+        }
+    }
+    sourceSets.main.resources.srcDir definitions
+}
+
+apply from: rootProject.file('gradle/source-aliases.gradle')

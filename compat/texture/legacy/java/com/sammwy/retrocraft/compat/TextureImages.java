@@ -7,7 +7,9 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 
 public final class TextureImages {
     public static DynamicTexture create(NativeImage image) {
-        return new DynamicTexture(image);
+        var texture = new DynamicTexture(image);
+        texture.setFilter(false, false);
+        return texture;
     }
 
     public static void beginBlend() {

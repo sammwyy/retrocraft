@@ -1,0 +1,54 @@
+// Mechanical Mojang class renames are applied at build time, never by copying maintained sources.
+if (!rootProject.target.symbols) return
+
+def groups = new groovy.json.JsonSlurper().parse(rootProject.file('compat/symbols.json'))
+def resolveAliases
+resolveAliases = { name ->
+    def group = groups[name]
+    if (group == null) throw new GradleException("Unknown Minecraft symbol group: ${name}")
+    def profile = group.inherit ? resolveAliases(group.inherit) : [:]
+    ['types', 'tokens', 'scoped', 'literals'].each { category ->
+        profile[category] = (profile[category] ?: [:]) + (group[category] ?: [:])
+    }
+    profile
+}
+def profile = resolveAliases(rootProject.target.symbols)
+def aliases = profile.types
+def rename = { String line, Map tokens ->
+    tokens.each { oldName, newName ->
+        line = line.replaceAll("\\b${java.util.regex.Pattern.quote(oldName)}\\b", java.util.regex.Matcher.quoteReplacement(newName))
+    }
+    line
+}
+
+afterEvaluate {
+    sourceSets.each { sources ->
+        def originals = sources.java.srcDirs.toList()
+        def generators = sources.java.buildDependencies.getDependencies(null).toList()
+        def adapted = tasks.register("prepare${sources.name.capitalize()}Sources", Sync) {
+            dependsOn generators
+            from originals
+            include '**/*.java'
+            into layout.buildDirectory.dir("generated/sourceAliases/${sources.name}")
+            inputs.property 'symbolAliases', profile
+            duplicatesStrategy = DuplicatesStrategy.FAIL
+            filteringCharset = 'UTF-8'
+            filter { String line ->
+                aliases.each { oldType, newType ->
+                    line = line.replace(oldType, newType)
+                            .replace(oldType.replace('.', '/'), newType.replace('.', '/'))
+                    def oldName = oldType.tokenize('.').last()
+                    def newName = newType.tokenize('.').last()
+                    if (oldName != newName) line = line.replaceAll("\\b${java.util.regex.Pattern.quote(oldName)}\\b", newName)
+                }
+                line = rename(line, profile.tokens)
+                profile.literals.each { before, after -> line = line.replace(before, after) }
+                line
+            }
+            profile.scoped.each { pattern, tokens ->
+                filesMatching(pattern) { filter { String line -> rename(line, tokens) } }
+            }
+        }
+        sources.java.setSrcDirs([adapted])
+    }
+}

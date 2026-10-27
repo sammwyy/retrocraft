@@ -12,5 +12,7 @@ public final class ItemModels {
         ItemModelPropertiesAccessor.retrocraft$register(item, id, predicate::value);
     }
 
+    public static void bootstrap() {}
+
     private ItemModels() {}
 }

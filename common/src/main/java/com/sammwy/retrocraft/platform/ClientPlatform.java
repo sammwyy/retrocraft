@@ -11,7 +11,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
@@ -42,6 +41,8 @@ public final class ClientPlatform {
 
         void models(Collection<ResourceLocation> models);
 
+        boolean modelAvailable(ResourceLocation id);
+
         void model(
                 ResourceLocation id,
                 DockedConsoleBlockEntity console,
@@ -52,7 +53,8 @@ public final class ClientPlatform {
                 boolean ambient);
 
         <T extends BlockEntity> void blockRenderer(
-                BlockEntityType<T> type, BlockEntityRendererProvider<T> renderer);
+                BlockEntityType<T> type,
+                com.sammwy.retrocraft.platform.RendererFactory<T> renderer);
 
         void consoleScreen();
     }
@@ -91,6 +93,10 @@ public final class ClientPlatform {
         backend.predicate(item, id, predicate);
     }
 
+    public static boolean modelAvailable(ResourceLocation id) {
+        return backend.modelAvailable(id);
+    }
+
     public static void models(Collection<ResourceLocation> models) {
         backend.models(models);
     }
@@ -107,7 +113,7 @@ public final class ClientPlatform {
     }
 
     public static <T extends BlockEntity> void blockRenderer(
-            BlockEntityType<T> type, BlockEntityRendererProvider<T> renderer) {
+            BlockEntityType<T> type, com.sammwy.retrocraft.platform.RendererFactory<T> renderer) {
         backend.blockRenderer(type, renderer);
     }
 

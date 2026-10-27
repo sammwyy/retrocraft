@@ -3,8 +3,8 @@ package com.sammwy.retrocraft.server.block;
 import java.util.*;
 
 import com.sammwy.retrocraft.Retrocraft;
-import com.sammwy.retrocraft.compat.LifecycleBlockEntity;
-import com.sammwy.retrocraft.compat.TagData;
+import com.sammwy.retrocraft.compat.PersistentBlockEntity;
+import com.sammwy.retrocraft.platform.StateData;
 import com.sammwy.retrocraft.server.console.*;
 import com.sammwy.retrocraft.server.console.component.ComponentStorage;
 import com.sammwy.retrocraft.server.item.ArcadeItem;
@@ -22,7 +22,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-public final class DockedConsoleBlockEntity extends LifecycleBlockEntity implements ConsoleHost {
+public final class DockedConsoleBlockEntity extends PersistentBlockEntity implements ConsoleHost {
     private ItemStack cartridge = ItemStack.EMPTY;
     private UUID instance;
     private BlockPos tv;
@@ -114,7 +114,7 @@ public final class DockedConsoleBlockEntity extends LifecycleBlockEntity impleme
 
     private void changed() {
         setChanged();
-        if (level == null || level.isClientSide) return;
+        if (level == null || level.isClientSide()) return;
         BlockState before = getBlockState(),
                 after = before.setValue(DockedConsoleBlock.POWERED, instance != null);
         if (!before.equals(after)) level.setBlock(worldPosition, after, Block.UPDATE_CLIENTS);
@@ -138,7 +138,7 @@ public final class DockedConsoleBlockEntity extends LifecycleBlockEntity impleme
 
     @Override
     public Vec3 position() {
-        return worldPosition.getCenter();
+        return Vec3.atCenterOf(worldPosition);
     }
 
     @Override
@@ -155,33 +155,23 @@ public final class DockedConsoleBlockEntity extends LifecycleBlockEntity impleme
     }
 
     @Override
-    protected void saveAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
-        super.saveAdditional(nbt, registries);
-        nbt.put(
-                hasInternalRom() ? "InternalRom" : "Cartridge",
-                TagData.stack(cartridge, registries));
-        if (instance != null) TagData.uuid(nbt, "InstanceID", instance);
-        if (tv != null) nbt.putLong("Tv", tv.asLong());
+    protected void saveState(StateData.Output nbt) {
+        nbt.stack(hasInternalRom() ? "InternalRom" : "Cartridge", cartridge);
+        if (instance != null) nbt.uuid("InstanceID", instance);
+        if (tv != null) nbt.longValue("Tv", tv.asLong());
         CompoundTag installed = new CompoundTag();
         var slots = definition().componentSlots();
         for (int i = 0; i < components.length; i++)
             ComponentStorage.write(installed, slots.get(i), components[i]);
-        if (!installed.isEmpty()) nbt.put(ComponentStorage.KEY, installed);
+        if (!installed.isEmpty()) nbt.compound(ComponentStorage.KEY, installed);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
-        super.loadAdditional(nbt, registries);
-        cartridge =
-                TagData.stack(
-                        TagData.compound(nbt, hasInternalRom() ? "InternalRom" : "Cartridge"),
-                        registries);
-        instance = TagData.uuid(nbt, "InstanceID");
-        tv =
-                TagData.longValue(nbt, "Tv") == null
-                        ? null
-                        : BlockPos.of(TagData.longValue(nbt, "Tv"));
-        CompoundTag installed = TagData.compound(nbt, ComponentStorage.KEY);
+    protected void loadState(StateData.Input nbt) {
+        cartridge = nbt.stack(hasInternalRom() ? "InternalRom" : "Cartridge");
+        instance = nbt.uuid("InstanceID");
+        tv = nbt.longValue("Tv") == null ? null : BlockPos.of(nbt.longValue("Tv"));
+        CompoundTag installed = nbt.compound(ComponentStorage.KEY);
         var slots = definition().componentSlots();
         for (int i = 0; i < components.length; i++)
             components[i] = ComponentStorage.read(installed, slots.get(i));

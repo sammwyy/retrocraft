@@ -11,8 +11,6 @@ import com.sammwy.retrocraft.server.screen.*;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -23,8 +21,8 @@ public class ConsoleComponentsTest implements GameTestPlatform {
         return new ItemStack(ConsoleRegistry.component(id));
     }
 
-    @GameTest(template = EMPTY_STRUCTURE)
-    public void dockedComponentsAreSlotCheckedAndSurviveSaving(GameTestHelper context) {
+    @Scenario
+    public void dockedComponentsAreSlotCheckedAndSurviveSaving(ScenarioContext context) {
         var world = context.getLevel();
         var pos = context.absolutePos(new BlockPos(1, 2, 1));
         world.setBlockAndUpdate(
@@ -46,6 +44,11 @@ public class ConsoleComponentsTest implements GameTestPlatform {
                                 java.util.List.of(
                                         Components.N64_EXPANSION_PAK, Components.N64_RUMBLE_PAK)),
                 "Installed components must be reported per slot");
+        var instance = java.util.UUID.randomUUID();
+        var television = pos.above(3);
+        console.cartridge(new ItemStack(console.definition().cartridge()));
+        console.tv(television);
+        console.instance(instance);
         var saved = console.saveWithFullMetadata(world.registryAccess());
         var restored =
                 (DockedConsoleBlockEntity)
@@ -55,6 +58,18 @@ public class ConsoleComponentsTest implements GameTestPlatform {
                 restored != null
                         && restored.installedComponents().equals(console.installedComponents()),
                 "Components must survive block entity NBT");
+        context.assertTrue(
+                instance.equals(restored.instance())
+                        && television.equals(restored.tv())
+                        && restored.cartridge().is(console.definition().cartridge()),
+                "The cartridge, emulation identity and television binding must survive saving");
+        context.assertTrue(
+                instance.equals(TagData.uuid(saved, "InstanceID"))
+                        && saved.contains("Cartridge")
+                        && saved.contains("Tv"),
+                "Storage API adapters must preserve the existing flat NBT keys");
+        console.instance(null);
+        console.tv(null);
         context.assertTrue(
                 "rumble"
                         .equals(
@@ -72,17 +87,15 @@ public class ConsoleComponentsTest implements GameTestPlatform {
         context.succeed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE)
-    public void handheldComponentsLiveInTheItemAndLockWhilePowered(GameTestHelper context) {
+    @Scenario
+    public void handheldComponentsLiveInTheItemAndLockWhilePowered(ScenarioContext context) {
         var player = context.makeMockServerPlayerInLevel();
         var gb =
                 new ItemStack(
                         ContentProperties.get(BuiltInRegistries.ITEM, Ids.of("retrocraft", "gb")));
         player.setItemInHand(InteractionHand.MAIN_HAND, gb);
         var host = new HandheldHost(player, player.getItemInHand(InteractionHand.MAIN_HAND));
-        var menu =
-                new ConsoleScreenHandler(
-                        1, player.getInventory(), host, player.getInventory().selected);
+        var menu = new ConsoleScreenHandler(1, player.getInventory(), host, host.inventorySlot());
         var cable = stack(Components.GB_LINK_CABLE.id());
         context.assertTrue(
                 menu.machineSlots() == 2
@@ -102,6 +115,35 @@ public class ConsoleComponentsTest implements GameTestPlatform {
                 !menu.getSlot(1).mayPickup(player) && !menu.getSlot(1).mayPlace(cable),
                 "Components are locked while the console runs");
         host.instance(null);
+        context.succeed();
+    }
+
+    @Scenario
+    public void breakingAConsoleDropsItsMediaAndComponentsOnce(ScenarioContext context) {
+        var world = context.getLevel();
+        var pos = context.absolutePos(new BlockPos(2, 2, 2));
+        var definition = ConsoleRegistry.get(Ids.of("retrocraft", "n64"));
+        world.setBlockAndUpdate(
+                pos,
+                ContentProperties.get(BuiltInRegistries.BLOCK, definition.id())
+                        .defaultBlockState());
+        var console = (DockedConsoleBlockEntity) world.getBlockEntity(pos);
+        console.cartridge(new ItemStack(definition.cartridge()));
+        console.component(0, stack(Components.N64_EXPANSION_PAK.id()));
+        world.destroyBlock(pos, false);
+        var drops =
+                world.getEntitiesOfClass(
+                        net.minecraft.world.entity.item.ItemEntity.class,
+                        new net.minecraft.world.phys.AABB(pos).inflate(1));
+        int media = 0, components = 0;
+        for (var drop : drops) {
+            if (drop.getItem().is(definition.cartridge())) media += drop.getItem().getCount();
+            if (drop.getItem().is(ConsoleRegistry.component(Components.N64_EXPANSION_PAK.id())))
+                components += drop.getItem().getCount();
+        }
+        context.assertTrue(
+                media == 1 && components == 1,
+                "Removing a console must drop each installed stack exactly once");
         context.succeed();
     }
 }

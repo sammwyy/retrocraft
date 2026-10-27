@@ -145,8 +145,8 @@ public final class ConsoleScreen extends AnimatedScreen {
         touchHeld = false;
         hudLayout = null;
         if (minecraft != null && !hudHiddenByUs) {
-            hudWasHidden = minecraft.options.hideGui;
-            minecraft.options.hideGui = true;
+            hudWasHidden = com.sammwy.retrocraft.compat.ClientHud.hidden(minecraft);
+            com.sammwy.retrocraft.compat.ClientHud.hidden(minecraft, true);
             hudHiddenByUs = true;
         }
         boolean focused = focusActive();
@@ -284,7 +284,8 @@ public final class ConsoleScreen extends AnimatedScreen {
             onClose();
             return true;
         }
-        if (RetrocraftClient.SETTINGS_KEY.matches(key, scanCode)) {
+        if (com.sammwy.retrocraft.compat.ClientInput.matches(
+                RetrocraftClient.SETTINGS_KEY, key, scanCode)) {
             transitionTo(SettingsScreen.modMenu(null));
             return true;
         }
@@ -436,7 +437,9 @@ public final class ConsoleScreen extends AnimatedScreen {
         double x = minecraft.mouseHandler.xpos() * scale, y = minecraft.mouseHandler.ypos() * scale;
         boolean firing =
                 GLFW.glfwGetMouseButton(
-                                minecraft.getWindow().getWindow(), GLFW.GLFW_MOUSE_BUTTON_LEFT)
+                                com.sammwy.retrocraft.compat.ClientInput.window(
+                                        minecraft.getWindow()),
+                                GLFW.GLFW_MOUSE_BUTTON_LEFT)
                         == GLFW.GLFW_PRESS;
         touchHeld = firing && inside(target, x, y);
         if (!inside(target, x, y)) return input;
@@ -530,7 +533,9 @@ public final class ConsoleScreen extends AnimatedScreen {
                 || !touchHeld
                 || !acceptingInput()
                 || !minecraft.isWindowActive()) return input;
-        if (GLFW.glfwGetMouseButton(minecraft.getWindow().getWindow(), GLFW.GLFW_MOUSE_BUTTON_LEFT)
+        if (GLFW.glfwGetMouseButton(
+                        com.sammwy.retrocraft.compat.ClientInput.window(minecraft.getWindow()),
+                        GLFW.GLFW_MOUSE_BUTTON_LEFT)
                 != GLFW.GLFW_PRESS) {
             touchHeld = false;
             return input;
@@ -630,7 +635,7 @@ public final class ConsoleScreen extends AnimatedScreen {
     @Override
     public void removed() {
         if (hudHiddenByUs && minecraft != null) {
-            minecraft.options.hideGui = hudWasHidden;
+            com.sammwy.retrocraft.compat.ClientHud.hidden(minecraft, hudWasHidden);
             hudHiddenByUs = false;
         }
         CameraRig.release();

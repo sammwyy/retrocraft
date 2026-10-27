@@ -540,7 +540,7 @@ public final class InstanceManager implements AutoCloseable {
     }
 
     private static boolean operator(ServerPlayer player) {
-        return player.hasPermissions(2);
+        return com.sammwy.retrocraft.compat.Access.operator(player);
     }
 
     /**
@@ -596,7 +596,8 @@ public final class InstanceManager implements AutoCloseable {
                         SettingsPackets.GuiOpen.schema(config)));
         if (error == null)
             Retrocraft.LOG.info(
-                    "{} updated Retrocraft settings via GUI", player.getGameProfile().getName());
+                    "{} updated Retrocraft settings via GUI",
+                    com.sammwy.retrocraft.compat.Profiles.name(player.getGameProfile()));
     }
 
     /**
@@ -618,7 +619,7 @@ public final class InstanceManager implements AutoCloseable {
         if (packet.action() == SettingsPackets.RESCAN
                 || packet.action() == SettingsPackets.RESCAN_NEW) {
             rescan(
-                    player.getGameProfile().getName(),
+                    com.sammwy.retrocraft.compat.Profiles.name(player.getGameProfile()),
                     packet.action() == SettingsPackets.RESCAN_NEW);
             send(
                     player,
@@ -696,7 +697,7 @@ public final class InstanceManager implements AutoCloseable {
 
     private void romChanged(ServerPlayer player, int request, boolean rescan) {
         send(player, new SettingsPackets.RomEvent(request, SettingsPackets.ACTION, true, ""));
-        if (rescan) rescan(player.getGameProfile().getName());
+        if (rescan) rescan(com.sammwy.retrocraft.compat.Profiles.name(player.getGameProfile()));
         else biosUpdated();
     }
 
@@ -814,7 +815,7 @@ public final class InstanceManager implements AutoCloseable {
             if (upload.data.size() < upload.total) return;
             romUploads.remove(player.getUUID());
             UUID playerId = player.getUUID();
-            String actor = player.getGameProfile().getName();
+            String actor = com.sammwy.retrocraft.compat.Profiles.name(player.getGameProfile());
             libraryIo.execute(
                     () -> {
                         try {
@@ -2176,7 +2177,9 @@ public final class InstanceManager implements AutoCloseable {
                         && !Boolean.FALSE.equals(other.linkSupported))
                     entries.add(
                             new LinkPackets.Entry(
-                                    other.data.id(), target.getGameProfile().getName()));
+                                    other.data.id(),
+                                    com.sammwy.retrocraft.compat.Profiles.name(
+                                            target.getGameProfile())));
             }
             entries.sort(Comparator.comparing(LinkPackets.Entry::name));
             send(
@@ -2229,7 +2232,9 @@ public final class InstanceManager implements AutoCloseable {
                             offer.token(),
                             List.of(
                                     new LinkPackets.Entry(
-                                            source.data.id(), player.getGameProfile().getName()))));
+                                            source.data.id(),
+                                            com.sammwy.retrocraft.compat.Profiles.name(
+                                                    player.getGameProfile())))));
             send(
                     player,
                     new LinkPackets.State(
@@ -2239,7 +2244,8 @@ public final class InstanceManager implements AutoCloseable {
                             List.of(
                                     new LinkPackets.Entry(
                                             target.data.id(),
-                                            recipient.getGameProfile().getName()))));
+                                            com.sammwy.retrocraft.compat.Profiles.name(
+                                                    recipient.getGameProfile())))));
             linkNotice(player, "sent");
         }
     }
@@ -2253,7 +2259,8 @@ public final class InstanceManager implements AutoCloseable {
                         : List.of(
                                 new LinkPackets.Entry(
                                         session.linkPartner.data.id(),
-                                        partner.getGameProfile().getName()));
+                                        com.sammwy.retrocraft.compat.Profiles.name(
+                                                partner.getGameProfile())));
         if (player != null)
             send(player, new LinkPackets.State(mode, session.data.id(), LinkPackets.NONE, entries));
     }
@@ -2273,7 +2280,8 @@ public final class InstanceManager implements AutoCloseable {
                                     : List.of(
                                             new LinkPackets.Entry(
                                                     offer.target(),
-                                                    recipient.getGameProfile().getName()))));
+                                                    com.sammwy.retrocraft.compat.Profiles.name(
+                                                            recipient.getGameProfile())))));
     }
 
     private void closeOffer(LinkInvitations.Offer offer) {
@@ -2682,7 +2690,7 @@ public final class InstanceManager implements AutoCloseable {
                 || !readyClients.add(player.getUUID())) return;
         Retrocraft.LOG.info(
                 "Client {} ready for hybrid emulation: {}",
-                player.getGameProfile().getName(),
+                com.sammwy.retrocraft.compat.Profiles.name(player.getGameProfile()),
                 requiredCores);
     }
 
@@ -2838,7 +2846,7 @@ public final class InstanceManager implements AutoCloseable {
                         "Instance {} preparing ownership epoch {} for {}",
                         session.data.id(),
                         session.ownership.epoch(),
-                        player.getGameProfile().getName());
+                        com.sammwy.retrocraft.compat.Profiles.name(player.getGameProfile()));
                 session.handoffStop = true;
                 session.offerSent = false;
                 session.romRequested = false;

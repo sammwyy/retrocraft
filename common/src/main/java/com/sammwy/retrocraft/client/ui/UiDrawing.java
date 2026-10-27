@@ -1,8 +1,7 @@
 package com.sammwy.retrocraft.client.ui;
 
-import org.joml.Vector4f;
-
 import com.sammwy.retrocraft.compat.ClientGraphics;
+import com.sammwy.retrocraft.compat.UiPose;
 
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -11,9 +10,9 @@ final class UiDrawing {
 
     static void pop(GuiGraphics context, float cx, float cy, float visibility) {
         float scale = .92f + .08f * visibility;
-        context.pose().translate(cx, cy + 6f * (1f - visibility), 0);
-        context.pose().scale(scale, scale, 1);
-        context.pose().translate(-cx, -cy, 0);
+        UiPose.of(context).translate(cx, cy + 6f * (1f - visibility), 0);
+        UiPose.of(context).scale(scale, scale, 1);
+        UiPose.of(context).translate(-cx, -cy, 0);
         ClientGraphics.color(context, 1, 1, 1, visibility);
     }
 
@@ -30,9 +29,9 @@ final class UiDrawing {
                     maxY = row;
                 }
         if (maxX < 0) return;
-        context.pose().pushPose();
+        UiPose.of(context).pushPose();
         try {
-            context.pose()
+            UiPose.of(context)
                     .translate(
                             x + (width - (maxX - minX + 1)) / 2f - minX,
                             y + (height - (maxY - minY + 1)) / 2f - minY,
@@ -42,17 +41,12 @@ final class UiDrawing {
                     if (rows[row].charAt(col) == 'X')
                         context.fill(col, row, col + 1, row + 1, color);
         } finally {
-            context.pose().popPose();
+            UiPose.of(context).popPose();
         }
     }
 
     /** DrawContext's scissor rectangles do not follow its matrix stack. */
     static void scissor(GuiGraphics context, int x1, int y1, int x2, int y2) {
-        var matrix = context.pose().last().pose();
-        var min = matrix.transform(new Vector4f(x1, y1, 0, 1));
-        var max = matrix.transform(new Vector4f(x2, y2, 0, 1));
-        context.enableScissor(
-                (int) Math.floor(min.x), (int) Math.floor(min.y),
-                (int) Math.ceil(max.x), (int) Math.ceil(max.y));
+        UiPose.of(context).scissor(x1, y1, x2, y2);
     }
 }

@@ -19,5 +19,11 @@ public final class ItemModels {
             ItemModelPropertiesAccessor.retrocraft$properties().put(id, PoweredProperty.CODEC);
     }
 
+    public static void bootstrap() {
+        var id = com.sammwy.retrocraft.platform.Ids.of("retrocraft", "powered");
+        if (REGISTERED.add(id))
+            ItemModelPropertiesAccessor.retrocraft$properties().put(id, PoweredProperty.CODEC);
+    }
+
     private ItemModels() {}
 }

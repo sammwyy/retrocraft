@@ -12,14 +12,14 @@ dependencies {
     if (!rootProject.minecraftVersion.startsWith('26.')) mappings loom.officialMojangMappings()
     def runtime = rootProject.minecraftVersion.startsWith('26.') ? 'implementation' : 'modImplementation'
     def optional = rootProject.minecraftVersion.startsWith('26.') ? 'compileOnly' : 'modCompileOnly'
-    add(runtime, "net.fabricmc:fabric-loader:${rootProject.minecraftVersion.startsWith('26.') ? '0.19.5' : project.loader_version}")
+    add(runtime, "net.fabricmc:fabric-loader:${rootProject.target.fabric_loader}")
     add(runtime, "net.fabricmc.fabric-api:fabric-api:${rootProject.target.fabric_api}")
     add(optional, "com.terraformersmc:modmenu:${rootProject.target.modmenu}")
 
 }
 
 processResources {
-    def metadata = [version: project.version, minecraft: rootProject.minecraftVersion, java: rootProject.target.java]
+    def metadata = [version: project.version, minecraft: rootProject.minecraftVersion, java: rootProject.target.java, fabricLoader: rootProject.target.fabric_loader]
     inputs.properties metadata
     filesMatching('fabric.mod.json') { expand metadata }
 }
@@ -48,3 +48,5 @@ if (project.hasProperty('smoke')) {
         runs.client { source sourceSets.smoke }
     }
 }
+
+apply from: rootProject.file('gradle/gametests.gradle')

@@ -8,12 +8,10 @@ import com.sammwy.retrocraft.server.item.HandheldConsoleItem;
 import com.sammwy.retrocraft.server.screen.*;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
 
 public class PspConsoleTest implements GameTestPlatform {
-    @GameTest(template = EMPTY_STRUCTURE)
-    public void pspUsesItsOwnUmdAndPortableCore(GameTestHelper context) {
+    @Scenario
+    public void pspUsesItsOwnUmdAndPortableCore(ScenarioContext context) {
         var id = Ids.of("retrocraft", "psp");
         var console = ConsoleRegistry.get(id);
         context.assertTrue(

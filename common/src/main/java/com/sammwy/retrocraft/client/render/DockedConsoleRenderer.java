@@ -18,14 +18,10 @@ import com.sammwy.retrocraft.platform.Ids;
 import com.sammwy.retrocraft.server.block.*;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemDisplayContext;
 
 /**
  * The casing is a baked vanilla model; this draws the inserted cartridge and, on the arcade
@@ -73,11 +69,7 @@ public final class DockedConsoleRenderer implements ConsoleRenderer<DockedConsol
                 : console.definition().id().getPath();
     }
 
-    private final ItemRenderer items;
-
-    public DockedConsoleRenderer(BlockEntityRendererProvider.Context context) {
-        items = context.getItemRenderer();
-    }
+    public DockedConsoleRenderer(BlockEntityRendererProvider.Context context) {}
 
     @Override
     public void draw(
@@ -109,14 +101,13 @@ public final class DockedConsoleRenderer implements ConsoleRenderer<DockedConsol
             matrices.translate(slot.x / 16, slot.y / 16, slot.z / 16);
             matrices.mulPose(Axis.YP.rotationDegrees(180));
             matrices.scale(slot.scale, slot.scale, slot.scale);
-            items.renderStatic(
+            com.sammwy.retrocraft.compat.ClientItems.draw(
                     console.cartridge(),
-                    ItemDisplayContext.FIXED,
-                    light,
-                    overlay,
+                    console.getLevel(),
                     matrices,
                     vertices,
-                    console.getLevel(),
+                    light,
+                    overlay,
                     (int) console.getBlockPos().asLong());
         }
         matrices.popPose();
@@ -149,17 +140,8 @@ public final class DockedConsoleRenderer implements ConsoleRenderer<DockedConsol
         matrices.pushPose();
         matrices.translate(0, 35.5 / 16, 2.77 / 16 - .5);
         matrices.scale(-scale, -scale, scale);
-        font.drawInBatch(
-                name,
-                -font.width(name) / 2f,
-                -4,
-                0xffbcebf2,
-                false,
-                matrices.last().pose(),
-                vertices,
-                Font.DisplayMode.NORMAL,
-                0xff141923,
-                0xf000f0);
+        com.sammwy.retrocraft.compat.WorldText.draw(
+                font, name, -font.width(name) / 2f, -4, 0xffbcebf2, matrices, vertices, 0xff141923);
         matrices.popPose();
     }
 
@@ -215,7 +197,8 @@ public final class DockedConsoleRenderer implements ConsoleRenderer<DockedConsol
         float w = entry.width() * fit, h = entry.height() * fit;
         float cx = (x0 + x1) / 32f - .5f, cy = (y0 + y1) / 32f, z = zUnits / 16f - .5f;
         var matrix = matrices.last().pose();
-        var black = vertices.getBuffer(RenderType.entitySolid(entry.id()));
+        var black =
+                vertices.getBuffer(com.sammwy.retrocraft.compat.Materials.entitySolid(entry.id()));
         quad(
                 black,
                 matrix,
@@ -229,9 +212,16 @@ public final class DockedConsoleRenderer implements ConsoleRenderer<DockedConsol
                 0,
                 0,
                 0);
-        ScreenProjection.capture(
-                entry.id(), matrix, cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2, z - .0045f);
-        var glass = vertices.getBuffer(RenderType.entityCutoutNoCull(entry.id()));
+        com.sammwy.retrocraft.compat.ProjectionCapture.capture(
+                vertices,
+                entry.id(),
+                matrix,
+                cx - w / 2,
+                cy - h / 2,
+                cx + w / 2,
+                cy + h / 2,
+                z - .0045f);
+        var glass = vertices.getBuffer(com.sammwy.retrocraft.compat.Materials.cutout(entry.id()));
         quad(
                 glass,
                 matrix,
@@ -269,10 +259,5 @@ public final class DockedConsoleRenderer implements ConsoleRenderer<DockedConsol
         Vertices.vertex(buffer, matrix, x1, y0, z, u0, v1, rgb, overlay, light, -1);
         Vertices.vertex(buffer, matrix, x0, y0, z, u1, v1, rgb, overlay, light, -1);
         Vertices.vertex(buffer, matrix, x0, y1, z, u1, v0, rgb, overlay, light, -1);
-    }
-
-    @Override
-    public boolean shouldRenderOffScreen(DockedConsoleBlockEntity console) {
-        return true;
     }
 }

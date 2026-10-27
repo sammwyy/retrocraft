@@ -361,7 +361,9 @@ final class ControlsPane {
             return true;
         }
         if (key == GLFW.GLFW_KEY_UNKNOWN) return true;
-        if (key == GLFW.GLFW_KEY_F8 || RetrocraftClient.SETTINGS_KEY.matches(key, scanCode)) {
+        if (key == GLFW.GLFW_KEY_F8
+                || com.sammwy.retrocraft.compat.ClientInput.matches(
+                        RetrocraftClient.SETTINGS_KEY, key, scanCode)) {
             captureHint = Component.translatable("controls.retrocraft.reserved");
             return true;
         }

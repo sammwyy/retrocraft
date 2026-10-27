@@ -1,0 +1,73 @@
+{
+  "identifiers": {
+    "types": {
+      "net.minecraft.resources.ResourceLocation": "net.minecraft.resources.Identifier",
+      "net.minecraft.client.renderer.RenderType": "net.minecraft.client.renderer.rendertype.RenderType"
+    }
+  },
+  "26.1": {
+    "inherit": "identifiers",
+    "types": {
+      "net.minecraft.client.gui.GuiGraphics": "net.minecraft.client.gui.GuiGraphicsExtractor",
+      "net.minecraft.world.inventory.ClickType": "net.minecraft.world.inventory.ContainerInput",
+      "net.minecraft.client.renderer.state.CameraRenderState": "net.minecraft.client.renderer.state.level.CameraRenderState",
+      "net.minecraft.client.renderer.block.model.BlockStateModel": "net.minecraft.client.renderer.block.dispatch.BlockStateModel",
+      "net.minecraft.client.renderer.block.model.ItemTransform": "net.minecraft.client.resources.model.cuboid.ItemTransform",
+      "net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup": "net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab",
+      "net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory": "net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider",
+      "net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType": "net.fabricmc.fabric.api.menu.v1.ExtendedMenuType",
+      "net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper": "net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper",
+      "net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents": "net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents"
+    },
+    "tokens": {
+      "drawString": "text",
+      "drawCenteredString": "centeredText",
+      "renderItem": "item",
+      "renderWidget": "extractWidgetRenderState",
+      "renderContents": "extractContents",
+      "renderLabels": "extractLabels",
+      "renderTooltip": "extractTooltip",
+      "renderBackground": "extractBackground",
+      "drawWordWrap": "textWithWordWrap",
+      "renderOutline": "outline",
+      "registerKeyBinding": "registerKeyMapping",
+      "playC2S": "serverboundPlay",
+      "playS2C": "clientboundPlay",
+      "afterRender": "afterExtract",
+      "entityCutoutNoCull": "entityCutout",
+      "displayClientMessage": "sendSystemMessage",
+      "submitColoredRectangle": "innerFill"
+    },
+    "scoped": {
+      "**/AnimatedScreen.java": {
+        "render": "extractRenderState"
+      },
+      "**/ConsoleInventoryScreen.java": {
+        "render": "extractRenderState"
+      }
+    },
+    "literals": {
+      "button.render(": "button.extractRenderState(",
+      "part.render(": "part.extractRenderState(",
+      "mkdirField.render(": "mkdirField.extractRenderState(",
+      "renameField.render(": "renameField.extractRenderState(",
+      "ItemContainerContents.EMPTY).stream()": "ItemContainerContents.EMPTY).allItemsCopyStream()",
+      ".getBlockModelShaper()": ".getBlockStateModelSet()",
+      ".getBlockModel(STATES.get(id))": ".get(STATES.get(id))"
+    }
+  },
+  "26.2": {
+    "inherit": "26.1",
+    "types": {
+      "net.minecraft.client.renderer.MultiBufferSource": "com.sammwy.retrocraft.compat.GeometryBuffers"
+    },
+    "literals": {
+      "client.screen": "client.gui.screen()",
+      "minecraft.screen": "minecraft.gui.screen()",
+      ".getInstance().screen": ".getInstance().gui.screen()",
+      ".client().screen": ".client().gui.screen()",
+      ".setScreen(": ".gui.setScreen(",
+      "client.getOverlay()": "client.gui.overlay()"
+    }
+  }
+}

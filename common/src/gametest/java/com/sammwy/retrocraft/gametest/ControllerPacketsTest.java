@@ -7,15 +7,13 @@ import com.sammwy.retrocraft.server.net.Packets;
 import com.sammwy.retrocraft.server.screen.*;
 
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 
 import io.netty.buffer.Unpooled;
 
 public class ControllerPacketsTest implements GameTestPlatform {
-    @GameTest(template = EMPTY_STRUCTURE)
-    public void virtualInputsRoundTripWithoutKeyboardAssignments(GameTestHelper context) {
+    @Scenario
+    public void virtualInputsRoundTripWithoutKeyboardAssignments(ScenarioContext context) {
         var input =
                 new PadInput(0xf001, (short) -32767, (short) 1234, (short) 32767, (short) -4321)
                         .withTouch((short) -12345, (short) 23456, true);

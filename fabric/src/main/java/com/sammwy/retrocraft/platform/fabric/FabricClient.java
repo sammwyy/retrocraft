@@ -19,15 +19,12 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -39,6 +36,7 @@ public final class FabricClient
         implements ClientModInitializer, ClientNetwork.Backend, ClientPlatform.Backend {
     @Override
     public void onInitializeClient() {
+        ItemModels.bootstrap();
         ClientNetwork.install(this);
         ClientPlatform.install(this);
         new RetrocraftClient().initialize();
@@ -85,15 +83,12 @@ public final class FabricClient
 
     @Override
     public void frame(Runnable callback) {
-        WorldRenderEvents.START.register(context -> callback.run());
+        com.sammwy.retrocraft.compat.FrameEvents.register(callback);
     }
 
     @Override
     public void hud(Consumer<GuiGraphics> callback) {
-        HudRenderCallback.EVENT.register(
-                (graphics, tick) -> {
-                    if (Minecraft.getInstance().screen == null) callback.accept(graphics);
-                });
+        com.sammwy.retrocraft.compat.HudEvents.register(callback);
         ScreenEvents.AFTER_INIT.register(
                 (client, screen, width, height) ->
                         ScreenEvents.afterRender(screen)
@@ -104,6 +99,11 @@ public final class FabricClient
     @Override
     public void predicate(Item item, ResourceLocation id, ClientPlatform.ItemPredicate predicate) {
         ItemModels.register(item, id, predicate);
+    }
+
+    @Override
+    public boolean modelAvailable(ResourceLocation id) {
+        return ExtraModels.available(id);
     }
 
     @Override
@@ -125,8 +125,8 @@ public final class FabricClient
 
     @Override
     public <T extends BlockEntity> void blockRenderer(
-            BlockEntityType<T> type, BlockEntityRendererProvider<T> renderer) {
-        BlockEntityRenderers.register(type, renderer);
+            BlockEntityType<T> type, com.sammwy.retrocraft.platform.RendererFactory<T> renderer) {
+        BlockEntityRenderers.register(type, renderer::create);
     }
 
     @Override

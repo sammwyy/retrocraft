@@ -21,6 +21,7 @@ public final class ClientSmoke {
     private static final UUID INSTANCE = UUID.randomUUID();
     private static final FrameCodec.Frame FRAME = new FrameCodec.Frame(4, 4, new byte[48]);
     private static ItemStack handheld = ItemStack.EMPTY;
+    private static net.minecraft.client.gui.screens.Screen closing;
 
     public static void install() {
         ClientPlatform.hud(
@@ -29,9 +30,16 @@ public final class ClientSmoke {
                 });
         ClientPlatform.tick(
                 client -> {
-                    if (client.screen == null || client.getOverlay() != null) return;
+                    if ((ticks == 0 && client.screen == null) || client.getOverlay() != null)
+                        return;
                     ticks++;
                     if (ticks == 20) {
+                        for (var model :
+                                com.sammwy.retrocraft.client.render.DockedConsoleRenderer
+                                        .arcadeModels())
+                            if (!ClientPlatform.modelAvailable(model))
+                                throw new AssertionError(
+                                        "Missing Retrocraft casing model: " + model);
                         if (ConsoleRegistry.consoles().isEmpty())
                             throw new AssertionError("No consoles registered");
                         var texture = ScreenTextures.upload(INSTANCE, FRAME);
@@ -46,6 +54,16 @@ public final class ClientSmoke {
                         client.setScreen(SettingsScreen.modMenu(null));
                     }
                     if (ticks > 20 && ticks < 80) ScreenTextures.upload(INSTANCE, FRAME);
+                    if (ticks == 60) {
+                        closing = client.screen;
+                        if (closing == null
+                                || !com.sammwy.retrocraft.compat.ClientInput.screenKey(
+                                        closing, org.lwjgl.glfw.GLFW.GLFW_KEY_F8, 0, 0))
+                            throw new AssertionError(
+                                    "Settings did not accept its native keyboard event");
+                    }
+                    if (ticks == 75 && client.screen == closing)
+                        throw new AssertionError("The settings closing animation did not finish");
                     if (ticks == 80) {
                         ScreenTextures.clear();
                         Retrocraft.LOG.info("RETROCRAFT_CLIENT_SMOKE_OK");

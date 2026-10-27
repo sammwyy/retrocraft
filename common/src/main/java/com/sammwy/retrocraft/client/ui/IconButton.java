@@ -1,12 +1,11 @@
 package com.sammwy.retrocraft.client.ui;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 
 /** Miniature square action button: a drawn pixel glyph with a tooltip instead of a label. */
-final class IconButton extends Button {
+final class IconButton extends com.sammwy.retrocraft.compat.GlyphButton {
     enum Icon {
         POWER,
         EJECT,
@@ -23,7 +22,7 @@ final class IconButton extends Button {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    protected void drawContents(GuiGraphics context, int mouseX, int mouseY, float delta) {
         boolean hover = isHovered();
         rounded(context, getX(), getY(), 14, 14, hover ? 0xE04A5160 : 0xC0282D38, 3);
         context.fill(getX() + 3, getY(), getX() + 11, getY() + 1, hover ? 0x30FFFFFF : 0x18FFFFFF);

@@ -20,6 +20,7 @@ if (!(targetLoader in ['fabric', 'forge', 'none'])) throw new GradleException("U
 include 'core', 'worker'
 if (targetLoader != 'none') include targetLoader
 
-if (targetLoader != 'none' && providers.gradleProperty('mc').getOrElse('1.21.1').startsWith('26.')) {
-    project(":${targetLoader}").buildFileName = 'build-modern.gradle'
+def minecraft = providers.gradleProperty('mc').getOrElse('1.21.1')
+if (targetLoader != 'none' && (minecraft.startsWith('26.') || minecraft == '1.21.11')) {
+    project(":${targetLoader}").buildFileName = targetLoader == 'fabric' && minecraft == '1.21.11' ? 'build-remap-modern.gradle' : 'build-modern.gradle'
 }

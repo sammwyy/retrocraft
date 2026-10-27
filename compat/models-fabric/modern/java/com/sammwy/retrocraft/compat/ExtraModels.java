@@ -9,12 +9,9 @@ import com.sammwy.retrocraft.server.block.DockedConsoleBlockEntity;
 
 import net.fabricmc.fabric.api.client.model.loading.v1.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.RandomSource;
 
 public final class ExtraModels {
     private static final Map<ResourceLocation, ExtraModelKey<BlockStateModel>> KEYS =
@@ -40,28 +37,13 @@ public final class ExtraModels {
             boolean ambient) {
         var model = Minecraft.getInstance().getModelManager().getModel(KEYS.get(id));
         if (model == null) return;
-        var state = console.getBlockState();
-        var renderer = Minecraft.getInstance().getBlockRenderer().getModelRenderer();
-        if (ambient)
-            renderer.tesselateBlock(
-                    console.getLevel(),
-                    model.collectParts(RandomSource.create()),
-                    state,
-                    console.getBlockPos().above(2),
-                    poses,
-                    buffers.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)),
-                    false,
-                    overlay);
-        else
-            renderer.renderModel(
-                    poses.last(),
-                    buffers.getBuffer(RenderType.solid()),
-                    model,
-                    1,
-                    1,
-                    1,
-                    light,
-                    overlay);
+        ModelGeometry.draw(model, console, poses, buffers, light, overlay, ambient);
+    }
+
+    public static boolean available(ResourceLocation id) {
+        if (!KEYS.containsKey(id)) return false;
+        var model = Minecraft.getInstance().getModelManager().getModel(KEYS.get(id));
+        return model != null && model != ModelGeometry.missing();
     }
 
     private ExtraModels() {}

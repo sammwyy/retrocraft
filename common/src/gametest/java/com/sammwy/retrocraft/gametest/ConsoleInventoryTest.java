@@ -6,8 +6,6 @@ import com.sammwy.retrocraft.server.console.ConsoleDefinition;
 import com.sammwy.retrocraft.server.console.ConsoleHost;
 import com.sammwy.retrocraft.server.screen.*;
 
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -15,8 +13,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
 public class ConsoleInventoryTest implements GameTestPlatform {
-    @GameTest(template = EMPTY_STRUCTURE)
-    public void concurrentMenusShareTheCartridgeAndCannotWithdrawItTwice(GameTestHelper context) {
+    @Scenario
+    public void concurrentMenusShareTheCartridgeAndCannotWithdrawItTwice(ScenarioContext context) {
         var host = new Host();
         var first = new ConsoleInventory(host);
         var second = new ConsoleInventory(host);

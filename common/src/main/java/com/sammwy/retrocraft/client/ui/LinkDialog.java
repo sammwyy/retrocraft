@@ -8,6 +8,7 @@ import org.lwjgl.glfw.GLFW;
 
 import com.sammwy.retrocraft.compat.ClientGraphics;
 import com.sammwy.retrocraft.compat.ContentProperties;
+import com.sammwy.retrocraft.compat.UiPose;
 import com.sammwy.retrocraft.platform.ClientNetwork;
 import com.sammwy.retrocraft.platform.Ids;
 import com.sammwy.retrocraft.server.net.LinkPackets;
@@ -215,10 +216,10 @@ final class LinkDialog {
         context.fill(0, 0, w, h, (int) (144 * visibility) << 24);
         int mouseX = acceptingInput() ? (int) ((mx - originX) / scale) : -1;
         int mouseY = acceptingInput() ? (int) ((my - originY) / scale) : -1;
-        context.pose().pushPose();
+        UiPose.of(context).pushPose();
         try {
-            context.pose().translate(originX, originY, 0);
-            context.pose().scale(scale, scale, 1);
+            UiPose.of(context).translate(originX, originY, 0);
+            UiPose.of(context).scale(scale, scale, 1);
             UiDrawing.pop(context, panelW / 2f, panelH / 2f, visibility);
             rounded(context, 2, 4, panelW, panelH, 0x70000000, 7);
             rounded(context, 0, 0, panelW, panelH, EDGE, 7);
@@ -239,7 +240,7 @@ final class LinkDialog {
             for (var button : buttons) button.render(context, mouseX, mouseY, delta);
         } finally {
             ClientGraphics.color(context, 1, 1, 1, 1);
-            context.pose().popPose();
+            UiPose.of(context).popPose();
         }
     }
 
@@ -318,9 +319,13 @@ final class LinkDialog {
                 network == null
                         ? DefaultPlayerSkin.getDefaultTexture()
                         : network.getOnlinePlayers().stream()
-                                .filter(p -> p.getProfile().getName().equals(name))
+                                .filter(
+                                        p ->
+                                                com.sammwy.retrocraft.compat.Profiles.name(
+                                                                p.getProfile())
+                                                        .equals(name))
                                 .findFirst()
-                                .map(p -> p.getSkin().texture())
+                                .map(p -> com.sammwy.retrocraft.compat.SkinTextures.texture(p))
                                 .orElse(DefaultPlayerSkin.getDefaultTexture());
         rounded(context, x - 2, y - 2, size + 4, size + 4, EDGE, 4);
         ClientGraphics.blit(context, skin, x, y, size, size, 8f, 8f, 8, 8, 64, 64);
@@ -330,7 +335,8 @@ final class LinkDialog {
     void click(double x, double y, int button) {
         if (!acceptingInput()) return;
         double mx = (x - originX) / scale, my = (y - originY) / scale;
-        for (var widget : List.copyOf(buttons)) if (widget.mouseClicked(mx, my, button)) return;
+        for (var widget : List.copyOf(buttons))
+            if (com.sammwy.retrocraft.compat.ClientInput.click(widget, mx, my, button)) return;
     }
 
     void scroll(double amount) {
@@ -359,7 +365,7 @@ final class LinkDialog {
             if (focused >= 0) {
                 var button = buttons.get(focused);
                 button.playDownSound(Minecraft.getInstance().getSoundManager());
-                button.onClick(button.getX(), button.getY());
+                com.sammwy.retrocraft.compat.ClientInput.activate(button);
             }
         } else if (state.mode() == LinkPackets.CANDIDATES) {
             if (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_PAGE_UP) changePage(-1);
@@ -367,7 +373,7 @@ final class LinkDialog {
         }
     }
 
-    private static final class PlayerRow extends AbstractWidget {
+    private static final class PlayerRow extends com.sammwy.retrocraft.compat.InputWidget {
         private final LinkPackets.Entry entry;
         private final Runnable invite;
 

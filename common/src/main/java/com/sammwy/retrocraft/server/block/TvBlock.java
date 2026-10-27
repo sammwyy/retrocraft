@@ -119,7 +119,7 @@ public final class TvBlock extends LifecycleBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
             Level world, BlockState state, BlockEntityType<T> type) {
-        return world.isClientSide
+        return world.isClientSide()
                 ? null
                 : createTickerHelper(type, entityType(), TvBlockEntity::tick);
     }
@@ -152,7 +152,7 @@ public final class TvBlock extends LifecycleBlock {
 
     @Override
     public void removed(Level world, BlockPos pos) {
-        if (!world.isClientSide
+        if (!world.isClientSide()
                 && world.getBlockEntity(pos) instanceof TvBlockEntity tv
                 && Retrocraft.instances() != null) Retrocraft.instances().televisionRemoved(tv);
     }

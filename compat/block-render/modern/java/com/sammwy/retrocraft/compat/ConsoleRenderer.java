@@ -8,6 +8,11 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 
 public interface ConsoleRenderer<T extends BlockEntity> extends BlockEntityRenderer<T> {
+    @Override
+    default boolean shouldRenderOffScreen(T entity) {
+        return true;
+    }
+
     void draw(
             T entity,
             float tick,

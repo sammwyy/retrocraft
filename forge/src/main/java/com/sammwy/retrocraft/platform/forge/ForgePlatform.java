@@ -24,7 +24,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
@@ -33,7 +32,6 @@ import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -75,34 +73,41 @@ public final class ForgePlatform implements Platform.Backend {
         }
     }
 
-    public ForgePlatform() {
-        var modBus = FMLJavaModLoadingContext.get().getModEventBus();
+    public ForgePlatform(FMLJavaModLoadingContext context) {
+        com.sammwy.retrocraft.compat.ForgeEvents.initialize(context);
         Platform.install(this);
         Network.install(NETWORK);
         Retrocraft.initialize();
         NETWORK.finish();
-        modBus.addListener(
+        com.sammwy.retrocraft.compat.ForgeEvents.mod(
+                RegisterEvent.class,
                 (RegisterEvent event) -> registrations.forEach(entry -> entry.apply(event)));
-        var bus = MinecraftForge.EVENT_BUS;
-        bus.addListener(
+        com.sammwy.retrocraft.compat.ForgeServerEvents.listen(
+                RegisterCommandsEvent.class,
                 (RegisterCommandsEvent event) ->
                         RetrocraftCommands.register(event.getDispatcher(), Retrocraft::instances));
-        bus.addListener((ServerStartedEvent event) -> Retrocraft.start(event.getServer()));
-        bus.addListener(
+        com.sammwy.retrocraft.compat.ForgeServerEvents.listen(
+                ServerStartedEvent.class,
+                (ServerStartedEvent event) -> Retrocraft.start(event.getServer()));
+        com.sammwy.retrocraft.compat.ForgeServerEvents.listen(
+                ServerStoppingEvent.class,
                 (ServerStoppingEvent event) -> {
                     Retrocraft.stop();
                     NETWORK.clear();
                 });
-        bus.addListener(
+        com.sammwy.retrocraft.compat.ForgeServerEvents.listen(
+                TickEvent.ServerTickEvent.Post.class,
                 (TickEvent.ServerTickEvent.Post event) -> {
                     if (Retrocraft.instances() != null) Retrocraft.instances().tick();
                 });
-        bus.addListener(
+        com.sammwy.retrocraft.compat.ForgeServerEvents.listen(
+                EntityJoinLevelEvent.class,
                 (EntityJoinLevelEvent event) -> {
                     if (!event.getLevel().isClientSide() && Retrocraft.instances() != null)
                         Retrocraft.instances().entityLoaded(event.getEntity());
                 });
-        bus.addListener(
+        com.sammwy.retrocraft.compat.ForgeServerEvents.listen(
+                EntityLeaveLevelEvent.class,
                 (EntityLeaveLevelEvent event) -> {
                     if (!event.getLevel().isClientSide()) {
                         NETWORK.unload(event.getEntity());
@@ -110,13 +115,15 @@ public final class ForgePlatform implements Platform.Backend {
                             Retrocraft.instances().entityUnloaded(event.getEntity());
                     }
                 });
-        bus.addListener(
+        com.sammwy.retrocraft.compat.ForgeServerEvents.listen(
+                PlayerEvent.PlayerLoggedInEvent.class,
                 (PlayerEvent.PlayerLoggedInEvent event) -> {
                     if (event.getEntity() instanceof ServerPlayer player
                             && Retrocraft.instances() != null)
                         Retrocraft.instances().sendCatalog(player);
                 });
-        bus.addListener(
+        com.sammwy.retrocraft.compat.ForgeServerEvents.listen(
+                PlayerEvent.PlayerLoggedOutEvent.class,
                 (PlayerEvent.PlayerLoggedOutEvent event) -> {
                     if (event.getEntity() instanceof ServerPlayer player) {
                         NETWORK.disconnect(player);
@@ -124,17 +131,20 @@ public final class ForgePlatform implements Platform.Backend {
                             Retrocraft.instances().disconnect(player.getUUID());
                     }
                 });
-        bus.addListener(
+        com.sammwy.retrocraft.compat.ForgeServerEvents.listen(
+                PlayerEvent.StartTracking.class,
                 (PlayerEvent.StartTracking event) -> {
                     if (event.getEntity() instanceof ServerPlayer player)
                         NETWORK.track(event.getTarget(), player);
                 });
-        bus.addListener(
+        com.sammwy.retrocraft.compat.ForgeServerEvents.listen(
+                PlayerEvent.StopTracking.class,
                 (PlayerEvent.StopTracking event) -> {
                     if (event.getEntity() instanceof ServerPlayer player)
                         NETWORK.untrack(event.getTarget(), player);
                 });
-        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> ForgeClient::install);
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist == Dist.CLIENT)
+            ForgeClient.install();
     }
 
     @Override
@@ -168,7 +178,7 @@ public final class ForgePlatform implements Platform.Backend {
     @Override
     public <T extends BlockEntity> BlockEntityType<T> blockEntityType(
             Platform.BlockEntityFactory<T> factory, Block... blocks) {
-        return BlockEntityType.Builder.of(factory::create, blocks).build(null);
+        return com.sammwy.retrocraft.compat.ForgeTypes.create(factory, blocks);
     }
 
     @Override
@@ -179,7 +189,8 @@ public final class ForgePlatform implements Platform.Backend {
                                 id,
                                 inventory,
                                 new ConsoleOpenData(
-                                        buffer.readResourceLocation(), buffer.readInt())));
+                                        ResourceLocation.STREAM_CODEC.decode(buffer),
+                                        buffer.readInt())));
     }
 
     @Override
@@ -190,7 +201,7 @@ public final class ForgePlatform implements Platform.Backend {
                                 new ConsoleScreenHandler(id, inventory, host, lockedSlot),
                         host.definition().displayName()),
                 buffer -> {
-                    buffer.writeResourceLocation(host.definition().id());
+                    ResourceLocation.STREAM_CODEC.encode(buffer, host.definition().id());
                     buffer.writeInt(lockedSlot);
                 });
     }

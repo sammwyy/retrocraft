@@ -99,7 +99,7 @@ public final class HandheldHost implements ConsoleHost {
 
     @Override
     public ServerLevel world() {
-        return holder != null ? holder.serverLevel() : (ServerLevel) dropped.level();
+        return holder != null ? (ServerLevel) holder.level() : (ServerLevel) dropped.level();
     }
 
     @Override

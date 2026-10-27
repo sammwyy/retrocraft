@@ -6,7 +6,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.sammwy.retrocraft.client.ui.hud.HudRect;
 
 import net.minecraft.client.Minecraft;
@@ -23,7 +22,7 @@ public final class ScreenProjection {
     private static final long STALE_NANOS = 250_000_000L;
 
     /** Called while rendering a block entity: world projection and camera rotation are bound. */
-    static void capture(
+    public static void capture(
             ResourceLocation texture,
             Matrix4f model,
             float x0,
@@ -33,8 +32,8 @@ public final class ScreenProjection {
             float z) {
         var window = Minecraft.getInstance().getWindow();
         Matrix4f transform =
-                new Matrix4f(RenderSystem.getProjectionMatrix())
-                        .mul(RenderSystem.getModelViewMatrix())
+                new Matrix4f(com.sammwy.retrocraft.compat.ClientView.projection())
+                        .mul(com.sammwy.retrocraft.compat.ClientMatrices.view())
                         .mul(model);
         float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE;
         float maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE;

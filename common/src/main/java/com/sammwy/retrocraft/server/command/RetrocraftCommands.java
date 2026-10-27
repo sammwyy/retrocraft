@@ -40,18 +40,27 @@ public final class RetrocraftCommands {
                 .then(Commands.literal("gui").executes(this::gui))
                 .then(
                         Commands.literal("scan")
-                                .requires(source -> source.hasPermission(2))
+                                .requires(
+                                        source ->
+                                                com.sammwy.retrocraft.compat.Access.operator(
+                                                        source))
                                 .executes(context -> scan(context, false))
                                 .then(
                                         Commands.literal("onlynews")
                                                 .executes(context -> scan(context, true))))
                 .then(
                         Commands.literal("reload")
-                                .requires(source -> source.hasPermission(2))
+                                .requires(
+                                        source ->
+                                                com.sammwy.retrocraft.compat.Access.operator(
+                                                        source))
                                 .executes(this::reload))
                 .then(
                         Commands.literal("config")
-                                .requires(source -> source.hasPermission(2))
+                                .requires(
+                                        source ->
+                                                com.sammwy.retrocraft.compat.Access.operator(
+                                                        source))
                                 .executes(this::listConfig)
                                 .then(
                                         Commands.argument("key", StringArgumentType.word())

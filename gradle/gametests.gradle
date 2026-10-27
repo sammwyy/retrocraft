@@ -1,0 +1,70 @@
+// Only the annotation/registration adapter is generated. Assertions stay in common.
+def modernTests = !(rootProject.minecraftVersion in ['1.20.5', '1.20.6', '1.21.1', '1.21.3', '1.21.4'])
+def testAdapters = tasks.register('generateGameTestAdapters') {
+    def sources = rootProject.file('common/src/gametest/java/com/sammwy/retrocraft/gametest')
+    def output = layout.buildDirectory.dir('generated/gameTestAdapters')
+    inputs.dir sources
+    inputs.property 'loader', project.name
+    inputs.property 'modernTests', modernTests
+    outputs.dir output
+    doLast {
+        def directory = output.get().dir('com/sammwy/retrocraft/gametest/generated').asFile
+        directory.mkdirs()
+        def functions = []
+        sources.eachFileMatch(~/.*Test\.java/) { file ->
+            def name = file.name[0..-6]
+            def methods = (file.text =~ /@Scenario\s+public void (\w+)\(\s*ScenarioContext \w+\)/).collect { it[1] }
+            if (methods.isEmpty()) throw new GradleException("No scenarios in ${file}")
+            def annotation = modernTests ? project.name == 'fabric' ? 'net.fabricmc.fabric.api.gametest.v1.GameTest' : 'net.minecraftforge.gametest.GameTest' : 'net.minecraft.gametest.framework.GameTest'
+            def header = "package com.sammwy.retrocraft.gametest.generated;\nimport ${annotation};\nimport net.minecraft.gametest.framework.GameTestHelper;\n"
+            def base = ''
+            if (project.name == 'fabric' && !modernTests) base = ' implements net.fabricmc.fabric.api.gametest.v1.FabricGameTest'
+            if (project.name == 'forge' && modernTests) header += '@net.minecraftforge.gametest.GameTestNamespace("retrocraft")\n'
+            def code = header + "public final class ${name}${base} {\n"
+            methods.each { method ->
+                functions.add([name: name, method: method, id: (name + '_' + method).toLowerCase(java.util.Locale.ROOT)])
+                code += "    @GameTest(${modernTests ? 'structure' : 'template'} = \"retrocraft:empty\")\n"
+                code += "    public void ${method}(GameTestHelper context) { new com.sammwy.retrocraft.gametest.${name}().${method}(new com.sammwy.retrocraft.gametest.ScenarioContext(context)); }\n"
+            }
+            new File(directory, file.name).text = code + '}\n'
+        }
+        if (project.name == 'forge' && modernTests) {
+            def registry = 'package com.sammwy.retrocraft.gametest.generated;\npublic final class Scenarios {\n'
+            registry += 'public static void register(net.minecraftforge.registries.RegisterEvent event) {\n'
+            registry += 'event.register(net.minecraft.core.registries.Registries.TEST_FUNCTION, helper -> {\n'
+            functions.each { test ->
+                registry += "helper.register(com.sammwy.retrocraft.platform.Ids.of(\"retrocraft\", \"${test.id}\"), new ${test.name}()::${test.method});\n"
+                def resource = output.get().file("resources/data/retrocraft/test_instance/${test.id}.json").asFile
+                resource.parentFile.mkdirs()
+                resource.text = groovy.json.JsonOutput.toJson([type: 'minecraft:function', environment: 'minecraft:default',
+                    function: "retrocraft:${test.id}", max_ticks: 100, setup_ticks: 1, required: true, structure: 'retrocraft:empty'])
+            }
+            new File(directory, 'Scenarios.java').text = registry + '});\n}\n}\n'
+        }
+    }
+}
+sourceSets.gametest.java.srcDir testAdapters
+
+if (modernTests) {
+    def structures = tasks.register('generateGameTestStructures') {
+        def output = layout.buildDirectory.dir('generated/gameTestStructures')
+        outputs.dir output
+        doLast {
+            def directory = output.get().dir('data/retrocraft/gametest/structure').asFile
+            directory.mkdirs()
+            def blocks = []
+            (0..<8).each { x -> (0..<8).each { y -> (0..<8).each { z ->
+                blocks.add("{pos:[${x},${y},${z}],state:\"minecraft:air\"}")
+            } } }
+            new File(directory, 'empty.snbt').text = '{DataVersion:4325,size:[8,8,8],entities:[],data:[' + blocks.join(',') + ']}'
+        }
+    }
+    sourceSets.gametest.resources.srcDir structures
+}
+
+if (project.name == 'forge') sourceSets.gametest.java.srcDir rootProject.file("compat/gametests-forge/${modernTests ? 'modern' : 'legacy'}/java")
+
+if (project.name == 'forge' && modernTests) {
+    sourceSets.gametest.resources.srcDir layout.buildDirectory.dir('generated/gameTestAdapters/resources')
+    tasks.named('processGametestResources') { dependsOn testAdapters }
+}

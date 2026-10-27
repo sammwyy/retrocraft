@@ -570,7 +570,8 @@ final class RomBrowser {
                 cancelEdits();
                 return true;
             }
-            if (renameField.keyPressed(key, scanCode, modifiers)) return true;
+            if (com.sammwy.retrocraft.compat.ClientInput.key(renameField, key, scanCode, modifiers))
+                return true;
         }
         if (mkdirField.visible) {
             if (key == 257 || key == 335) {
@@ -581,7 +582,8 @@ final class RomBrowser {
                 cancelEdits();
                 return true;
             }
-            if (mkdirField.keyPressed(key, scanCode, modifiers)) return true;
+            if (com.sammwy.retrocraft.compat.ClientInput.key(mkdirField, key, scanCode, modifiers))
+                return true;
         }
         if (key == 256) {
             cancelEdits();
@@ -593,8 +595,12 @@ final class RomBrowser {
 
     boolean charTyped(char chr, int modifiers) {
         if (!active) return false;
-        if (renameField.visible && renameField.charTyped(chr, modifiers)) return true;
-        if (mkdirField.visible && mkdirField.charTyped(chr, modifiers)) return true;
+        if (renameField.visible
+                && com.sammwy.retrocraft.compat.ClientInput.character(renameField, chr, modifiers))
+            return true;
+        if (mkdirField.visible
+                && com.sammwy.retrocraft.compat.ClientInput.character(mkdirField, chr, modifiers))
+            return true;
         return false;
     }
 

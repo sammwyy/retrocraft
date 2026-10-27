@@ -37,7 +37,6 @@ public final class ScreenTextures {
         if (texture == null || entry.width != frame.width() || entry.height != frame.height()) {
             release(instance);
             texture = TextureImages.create(new NativeImage(frame.width(), frame.height(), false));
-            texture.setFilter(false, false);
             ResourceLocation id = Ids.of("retrocraft", "console/" + instance);
             Minecraft.getInstance().getTextureManager().register(id, texture);
             entry = new Entry(id, frame.width(), frame.height(), 0);

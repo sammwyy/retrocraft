@@ -11,9 +11,9 @@ public abstract class LifecycleBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void preRemoveSideEffects(BlockPos pos, BlockState next) {
-        if (!getBlockState().is(next.getBlock()) && getLevel() != null)
+    public void preRemoveSideEffects(BlockPos pos, BlockState previous) {
+        if (getLevel() != null)
             ((LifecycleBlock) getBlockState().getBlock()).removed(getLevel(), getBlockPos());
-        super.preRemoveSideEffects(pos, next);
+        super.preRemoveSideEffects(pos, previous);
     }
 }

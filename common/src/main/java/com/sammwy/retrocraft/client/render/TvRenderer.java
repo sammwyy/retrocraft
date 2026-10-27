@@ -49,11 +49,6 @@ public final class TvRenderer implements ConsoleRenderer<TvBlockEntity> {
     }
 
     @Override
-    public boolean shouldRenderOffScreen(TvBlockEntity tv) {
-        return true;
-    }
-
-    @Override
     public int getViewDistance() {
         return 96;
     }
